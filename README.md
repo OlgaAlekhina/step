@@ -1,7 +1,7 @@
 #  Как запустить проект на своем локальном сервере через IDE PyCharm:
 clone this repo
 ```
-git clone 
+git clone https://git.infra.cloveri.com/o.alekhina/step
 ```
 create virtual env
 ```
