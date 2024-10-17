@@ -1,0 +1,5 @@
+Django==5.1.2
+django-rest-swagger==2.2.0
+drf-yasg==1.21.8
+gunicorn==23.0.0
+python-dotenv==1.0.1
