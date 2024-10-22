@@ -66,7 +66,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware'
 ]
 
-# SITE_ID = 1
+SITE_ID = 1
 
 ROOT_URLCONF = 'step.urls'
 
@@ -86,13 +86,27 @@ TEMPLATES = [
     },
 ]
 
-BASE_URL_RAIDA = str(os.getenv('BASE_URL_RAIDA'))
-BASE_URL_SERVICES = str(os.getenv('BASE_URL_SERVICES'))
-BASE_URL_REG = str(os.getenv('BASE_URL_REG'))
+BASE_URL = str(os.getenv('BASE_URL'))
 USERNAME = str(os.getenv('USER_RAIDA'))
-PASSWORD = str(os.getenv('PASSWORD_RAIDA'))
+PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 NODE_ID = str(os.getenv('NODE_ID'))
+RAIDA_TASK_URL = str(os.getenv('RAIDA_TASK_URL'))
+
+#   Идентификаторы процессов
 PROCESS_ID_CONTESTS = str(os.getenv('PROCESS_ID_CONTESTS'))
+PROCESS_ID_DOCONTESTS = str(os.getenv('PROCESS_ID_DOCONTESTS'))
+
+#   Статусы заявки
+STATUS_ID_ACCESS = str(os.getenv('STATUS_ID_ACCESS'))
+STATUS_ID_DENIED = str(os.getenv('STATUS_ID_DENIED'))
+STATUS_ID_NEWCONTEST = str(os.getenv('STATUS_ID_NEWCONTEST'))
+STATUS_ID_INWORKCONTEST = str(os.getenv('STATUS_ID_INWORKCONTEST'))
+
+#   Статусы конкурса
+STATUS_ID_VOTING = str(os.getenv('STATUS_ID_VOTING'))
+STATUS_ID_ACTIVE = str(os.getenv('STATUS_ID_ACTIVE'))
+STATUS_ID_RESULT = str(os.getenv('STATUS_ID_RESULT'))
+
 
 WSGI_APPLICATION = 'step.wsgi.application'
 
@@ -154,3 +168,14 @@ CORS_ALLOWED_ORIGINS = str(os.getenv("DJANGO_CORS_ALLOWED_ORIGINS")).split(" ")
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
 CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Contests',
+    'VERSION': '0.0.1',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_INCLUDE_SCHEMA': True,
+}
