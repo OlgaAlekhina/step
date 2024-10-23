@@ -90,35 +90,21 @@ BASE_URL = str(os.getenv('BASE_URL'))
 USERNAME = str(os.getenv('USER_RAIDA'))
 PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 NODE_ID = str(os.getenv('NODE_ID'))
-RAIDA_TASK_URL = str(os.getenv('RAIDA_TASK_URL'))
-
-#   Идентификаторы процессов
-PROCESS_ID_CONTESTS = str(os.getenv('PROCESS_ID_CONTESTS'))
-PROCESS_ID_DOCONTESTS = str(os.getenv('PROCESS_ID_DOCONTESTS'))
-
-#   Статусы заявки
-STATUS_ID_ACCESS = str(os.getenv('STATUS_ID_ACCESS'))
-STATUS_ID_DENIED = str(os.getenv('STATUS_ID_DENIED'))
-STATUS_ID_NEWCONTEST = str(os.getenv('STATUS_ID_NEWCONTEST'))
-STATUS_ID_INWORKCONTEST = str(os.getenv('STATUS_ID_INWORKCONTEST'))
 
 #   Статусы конкурса
-STATUS_ID_VOTING = str(os.getenv('STATUS_ID_VOTING'))
-STATUS_ID_ACTIVE = str(os.getenv('STATUS_ID_ACTIVE'))
-STATUS_ID_RESULT = str(os.getenv('STATUS_ID_RESULT'))
-
+STATUS_ID_DONE = str(os.getenv('STATUS_ID_DONE'))
 
 WSGI_APPLICATION = 'step.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 SCRIPT_NAME = '/archive'
 
@@ -161,9 +147,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 CORS_ALLOWED_ORIGINS = str(os.getenv("DJANGO_CORS_ALLOWED_ORIGINS")).split(" ")
-
 
 CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
@@ -173,9 +157,24 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+# SPECTACULAR_SETTINGS = {
+#     'TITLE': 'API Contests',
+#     'VERSION': '0.0.1',
+#     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+#     'SERVE_INCLUDE_SCHEMA': True,
+# }
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Contests',
-    'VERSION': '0.0.1',
-    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
-    'SERVE_INCLUDE_SCHEMA': True,
+    # 'DESCRIPTION': 'API для получения всех конкурсов со статусом завершено',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [
+        {
+            'bearerAuth': [],
+        },
+    ],
+    'COMPONENT_SPLIT_REQUEST': True,
+    'CAMELIZE_NAMES': False,
+    'RESPONSIVE_DOCS': True,
 }
