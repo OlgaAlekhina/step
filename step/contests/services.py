@@ -68,39 +68,33 @@ def get_archive_contests(token):
         result_data = []
         for contest in response_data:
             status_contest = contest['status'].get('name', None) if contest.get('status', None) is not None else None
-            process = contest['process'].get('description', None) if contest.get('process', None) is not None else None
 
             custom_fields = contest.get('custom_fields', None)
             if custom_fields is not None:
                 cf_deadline = custom_fields.get('cf_deadline', None)
                 cf_award = custom_fields.get('cf_award', None)
-                cf_address = custom_fields.get('cf_address', None)
                 cf_brief = custom_fields.get('cf_brief', None)
                 cf_title = custom_fields.get('cf_title', None)
                 cf_konkurs_category = custom_fields.get('cf_konkurs_category', None)
-                cf_timepickerrange = custom_fields.get('cf_timepickerrange', None)
+
             else:
                 cf_deadline = None
                 cf_award = None
-                cf_address = None
                 cf_brief = None
                 cf_title = None
                 cf_konkurs_category = None
-                cf_timepickerrange = None
 
             result_data.append({
                 'id': contest.get('id', None),
                 'title': contest.get('title', None),
                 'description': contest.get('description', None),
                 'status': status_contest,
-                'process': process,
                 'cf_deadline': datetime_convert(cf_deadline),
                 'cf_award': cf_award,
-                'cf_address': cf_address,
                 'cf_brief': cf_brief,
                 'cf_title': cf_title,
                 'cf_konkurs_category': cf_konkurs_category,
-                'cf_timepickerrange': cf_timepickerrange
+
             }
             )
 
