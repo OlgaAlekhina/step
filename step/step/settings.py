@@ -91,6 +91,8 @@ USERNAME = str(os.getenv('USER_RAIDA'))
 PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 NODE_ID = str(os.getenv('NODE_ID'))
 
+PROCESS_CONTESTS_ID = str(os.getenv('PROCESS_CONTESTS_ID'))
+
 #   Статусы конкурса
 STATUS_ID_DONE = str(os.getenv('STATUS_ID_DONE'))
 
@@ -166,8 +168,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Contests',
-    # 'DESCRIPTION': 'API для получения всех конкурсов со статусом завершено',
-    'VERSION': '1.0.0',
+    # 'DESCRIPTION': 'Текст',
+    'VERSION': '0.0.1',
     'SERVE_INCLUDE_SCHEMA': False,
     'SECURITY': [
         {

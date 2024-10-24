@@ -1,7 +1,9 @@
-import requests
-from datetime import datetime
 import time
+from datetime import datetime
+
+import requests
 from django.conf import settings
+from requests.exceptions import RequestException, HTTPError
 
 token_cache = {'access_token': None, 'last_update': 0}
 
@@ -9,6 +11,8 @@ base_url = settings.BASE_URL
 username = settings.USERNAME
 password = settings.PASSWORD
 node_id = settings.NODE_ID
+
+process_contests_id = settings.PROCESS_CONTESTS_ID
 
 #   Статус конкурса
 status_id_done = settings.STATUS_ID_DONE
@@ -30,80 +34,105 @@ def get_token():
             token_cache['last_update'] = current_time
             return token_cache['access_token']
         else:
-            print(f'Ошибка: {response.status_code} - {response.text}')
             return None
 
     else:
         return token_cache['access_token']
 
 
+def datetime_convert(date, format_date='%d.%m.%Y'):
+    """Преобразование даты в заданный формат."""
+    if date is not None:
+        result = datetime.fromisoformat(date).strftime(format_date)
+    else:
+        result = date
+    return result
+
+
 def get_archive_contests(token):
+    """Получение всех конкурсов со статусом завершен. Реализация функционала Архив конкурсов."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
 
-    response = requests.get(url, headers=headers)
+    try:
+        completed_contests = {
+            "rql": f"process.id = '{process_contests_id}' AND status.id = '{status_id_done}'"
+        }
 
-    if response.status_code == 200:
-        tasks = response.json()['data']
-        result = []
+        response = requests.post(url, json=completed_contests, headers=headers)
+        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
 
-        for task in tasks:
-            status = task.get('status', None)
-            if status is not None:
-                # if status.get('name', 'Пусто') == 'Завершен':
-                # if status.get('id', 'Пусто') == status_id_done:
-                if task.get('process').get('name') == 'Конкурс':
-                    result.append(task)
-        return result
+        response_data = response.json().get('data', [])
 
-    else:
-        return f'Ошибка: {response.status_code} - {response.text}'
+        result_data = []
+        for contest in response_data:
+            status_contest = contest['status'].get('name', None) if contest.get('status', None) is not None else None
+            process = contest['process'].get('description', None) if contest.get('process', None) is not None else None
 
-# def get_contests(token):
-#     access_token = token
-#
-#     headers = {"Authorization": f'Bearer {access_token}'}
-#
-#     url = f"{base_url}/api/processes/{node_id}"
-#     # url = f"{base_url}/api/nodes/"
-#
-#     response = requests.get(url, headers=headers)
-#
-#     if response.status_code == 200:
-#         processes = response.json()['data']
-#         result = []
-#
-#         for i in processes:
-#             print(i)
-#
-#         # status_ids = {status_id_voting, status_id_active, status_id_result}
-#
-#         # for task in processes:
-#         #     status = task.get('status', {}).get('id')
-#         #     if status in status_ids:
-#         #         task_id = task.get('id', None)
-#         #         title = task.get('title', None)
-#         #         cf_brief = task['custom_fields'].get('cf_brief', None)
-#         #         category = task['custom_fields'].get('cf_konkurs_category', None)
-#         #         deadline = task['custom_fields']['cf_deadline']
-#         #         formatted_deadline = datetime.fromisoformat(deadline).strftime(
-#         #             '%d.%m.%Y') if deadline and deadline.strip() else None
-#         #         project = task['custom_fields'].get('cf_projects', None)
-#         #         profession = task['custom_fields'].get('cf_profession', None)
-#         #
-#         #         result.append({
-#         #             'id': task_id,
-#         #             'title': title,
-#         #             'brief': cf_brief,
-#         #             'category': category,
-#         #             'deadline': formatted_deadline,
-#         #             'award': task['custom_fields']['cf_award'],
-#         #             'project': project if project and project.strip() else None,
-#         #             'profession': profession if profession and profession.strip() else None
-#         #         })
-#
-#         return processes
-#
-#     else:
-#         return f'Ошибка: {response.status_code} - {response.text}'
+            custom_fields = contest.get('custom_fields', None)
+            if custom_fields is not None:
+                cf_deadline = custom_fields.get('cf_deadline', None)
+                cf_award = custom_fields.get('cf_award', None)
+                cf_address = custom_fields.get('cf_address', None)
+                cf_brief = custom_fields.get('cf_brief', None)
+                cf_title = custom_fields.get('cf_title', None)
+                cf_konkurs_category = custom_fields.get('cf_konkurs_category', None)
+                cf_timepickerrange = custom_fields.get('cf_timepickerrange', None)
+            else:
+                cf_deadline = None
+                cf_award = None
+                cf_address = None
+                cf_brief = None
+                cf_title = None
+                cf_konkurs_category = None
+                cf_timepickerrange = None
+
+            result_data.append({
+                'id': contest.get('id', None),
+                'title': contest.get('title', None),
+                'description': contest.get('description', None),
+                'status': status_contest,
+                'process': process,
+                'cf_deadline': datetime_convert(cf_deadline),
+                'cf_award': cf_award,
+                'cf_address': cf_address,
+                'cf_brief': cf_brief,
+                'cf_title': cf_title,
+                'cf_konkurs_category': cf_konkurs_category,
+                'cf_timepickerrange': cf_timepickerrange
+            }
+            )
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": "Список всех конкурсов со статусом Завершен"
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "count": len(result_data),
+                "compression_algorithm": "lossy"
+            }
+        }
+
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
