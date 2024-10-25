@@ -10,23 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@hd2w7&!&m%i^r=z#mo9nr6u38kb3#jo@8v29@p&!n9cx64l*%'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+debug_env = os.getenv('DEBUG')
+DEBUG = bool(int(debug_env)) if debug_env and debug_env.isdigit() else False
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = str(os.getenv("DJANGO_ALLOWED_HOSTS")).split(" ")
 
 # Application definition
 
@@ -36,9 +40,19 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles'
+]
+
+INSTALLED_APPS += [
+    'rest_framework',
+    'drf_spectacular',
+    'corsheaders',
     'rest_framework_swagger',
-    'drf_yasg',
+    'drf_yasg'
+]
+
+INSTALLED_APPS += [
+    'contests.apps.ContestsConfig',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +63,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
+
+SITE_ID = 1
 
 ROOT_URLCONF = 'step.urls'
 
@@ -69,8 +86,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'step.wsgi.application'
+BASE_URL = str(os.getenv('BASE_URL'))
+USERNAME = str(os.getenv('USER_RAIDA'))
+PASSWORD = str(os.getenv('PASSWD_RAIDA'))
+NODE_ID = str(os.getenv('NODE_ID'))
 
+PROCESS_CONTESTS_ID = str(os.getenv('PROCESS_CONTESTS_ID'))
+
+#   Статусы конкурса
+STATUS_ID_DONE = str(os.getenv('STATUS_ID_DONE'))
+
+WSGI_APPLICATION = 'step.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -82,6 +108,7 @@ DATABASES = {
     }
 }
 
+SCRIPT_NAME = '/archive'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -101,18 +128,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = str(os.getenv('LANGUAGE_CODE'))
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = str(os.getenv('TIME_ZONE'))
 
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -123,3 +148,35 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOWED_ORIGINS = str(os.getenv("DJANGO_CORS_ALLOWED_ORIGINS")).split(" ")
+
+CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+CORS_ALLOW_HEADERS = ['Content-Type', 'Authorization']
+CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# SPECTACULAR_SETTINGS = {
+#     'TITLE': 'API Contests',
+#     'VERSION': '0.0.1',
+#     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+#     'SERVE_INCLUDE_SCHEMA': True,
+# }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Contests',
+    # 'DESCRIPTION': 'Текст',
+    'VERSION': '0.0.1',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [
+        {
+            'bearerAuth': [],
+        },
+    ],
+    'COMPONENT_SPLIT_REQUEST': True,
+    'CAMELIZE_NAMES': False,
+    'RESPONSIVE_DOCS': True,
+}
