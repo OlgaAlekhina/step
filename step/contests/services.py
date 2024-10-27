@@ -43,7 +43,7 @@ def get_token():
 def datetime_convert(date, format_date='%d.%m.%Y'):
     """Преобразование даты в заданный формат."""
     if date is not None:
-        result = datetime.fromisoformat(date).strftime(format_date)
+        result = datetime.fromisoformat(date.rstrip("Z") + "+00:00").strftime(format_date)
     else:
         result = date
     return result
