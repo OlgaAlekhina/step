@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./app
+    command: gunicorn step.wsgi -b :8080 --workers 2
+    restart: unless-stopped
+    ports:
+      - 8080:8080
