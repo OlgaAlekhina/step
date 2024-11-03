@@ -99,6 +99,14 @@ def get_archive_contests(token):
             }
             )
 
+        # Эта часть нужна, чтобы использовать сериализаторы для обработки данных из Райды:
+        # contest_serializer = ContestsSerializer(data=response_data, many=True)
+        # contest_serializer.is_valid()
+        # contests = contest_serializer.save()
+        # result_data = []
+        # for contest in contests:
+        #     result_data.append(contest.__dict__)
+
         result_data = {
             "detail": {
                 "code": "OK",
@@ -132,6 +140,7 @@ def get_archive_contests(token):
         }
         return result_data, response.status_code
 
+
 def get_contest(token, contest_id):
     """Получение данных одного конкурса по его id."""
     access_token = token
@@ -141,31 +150,10 @@ def get_contest(token, contest_id):
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
         response_data = response.json().get('data', [])
-
-        print(response_data)
-
         contest_serializer = ContestsSerializer(data=response_data)
         contest_serializer.is_valid()
-        print(contest_serializer.is_valid())
-        print(contest_serializer.errors)
-        obj = contest_serializer.save()
-        result_data = obj.__dict__
-
-
-        # result_data = {
-        #     'id': serializer_data.get('id'),
-        #     'title': serializer_data.get('title'),
-        #     'description': serializer_data.get('description'),
-        #     'status': serializer_data['status'].get('name'),
-        #     'deadline': datetime_convert(serializer_data['custom_fields'].get('cf_deadline')),
-        #     'brief': serializer_data['custom_fields'].get('cf_brief'),
-        #     'award': serializer_data['custom_fields'].get('cf_award'),
-        #     'category': serializer_data['custom_fields'].get('cf_konkurs_category'),
-        #     'another_title': serializer_data['custom_fields'].get('cf_title'),
-        # }
-        #
-        # print('result_data', result_data)
-
+        contest = contest_serializer.save()
+        result_data = contest.__dict__
 
         result_data = {
             "detail": {

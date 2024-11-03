@@ -51,16 +51,12 @@ class ArchiveView(APIView):
 class ContestDetailsView(APIView):
     @extend_schema(
         summary="Retrieve a details of contest",
-        description="Получение данных одного конкурса",
+        description="Получение данных одного конкурса по его id",
         responses={},
         tags=['Contests']
     )
     def get(self, request, contest_id):
         access_token = get_token()
         contest_data = get_contest(access_token, contest_id)
-        # print(contest_data[0].get('data'))
-        # serializer = ResponseSerializer(data=contest_data[0].get('data'))
-        # print(serializer.is_valid())
-        # serializer.is_valid()
         return Response(contest_data[0], status=contest_data[1])
 
