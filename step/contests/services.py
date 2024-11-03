@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 from django.conf import settings
 from requests.exceptions import RequestException, HTTPError
+from .serializers import ContestsSerializer
 
 token_cache = {'access_token': None, 'last_update': 0}
 
@@ -130,3 +131,71 @@ def get_archive_contests(token):
             }
         }
         return result_data, response.status_code
+
+def get_contest(token, contest_id):
+    """Получение данных одного конкурса по его id."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/{node_id}/{contest_id}"
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+        response_data = response.json().get('data', [])
+
+        print(response_data)
+
+        contest_serializer = ContestsSerializer(data=response_data)
+        contest_serializer.is_valid()
+        print(contest_serializer.is_valid())
+        print(contest_serializer.errors)
+        obj = contest_serializer.save()
+        result_data = obj.__dict__
+
+
+        # result_data = {
+        #     'id': serializer_data.get('id'),
+        #     'title': serializer_data.get('title'),
+        #     'description': serializer_data.get('description'),
+        #     'status': serializer_data['status'].get('name'),
+        #     'deadline': datetime_convert(serializer_data['custom_fields'].get('cf_deadline')),
+        #     'brief': serializer_data['custom_fields'].get('cf_brief'),
+        #     'award': serializer_data['custom_fields'].get('cf_award'),
+        #     'category': serializer_data['custom_fields'].get('cf_konkurs_category'),
+        #     'another_title': serializer_data['custom_fields'].get('cf_title'),
+        # }
+        #
+        # print('result_data', result_data)
+
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": "Данные конкурса"
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "compression_algorithm": "lossy"
+            }
+        }
+
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+

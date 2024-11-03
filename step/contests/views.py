@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import GetArchiveSerializer, ErrorResponseSerializer
-from .services import get_token, get_archive_contests
+from .services import get_token, get_archive_contests, get_contest
 
 
 class ArchiveView(APIView):
@@ -46,3 +46,21 @@ class ArchiveView(APIView):
         access_token = get_token()
         result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
+
+
+class ContestDetailsView(APIView):
+    @extend_schema(
+        summary="Retrieve a details of contest",
+        description="Получение данных одного конкурса",
+        responses={},
+        tags=['Contests']
+    )
+    def get(self, request, contest_id):
+        access_token = get_token()
+        contest_data = get_contest(access_token, contest_id)
+        # print(contest_data[0].get('data'))
+        # serializer = ResponseSerializer(data=contest_data[0].get('data'))
+        # print(serializer.is_valid())
+        # serializer.is_valid()
+        return Response(contest_data[0], status=contest_data[1])
+
