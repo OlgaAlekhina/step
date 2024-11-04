@@ -3,7 +3,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import GetArchiveSerializer, ErrorResponseSerializer
+from .serializers import GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer
 from .services import get_token, get_archive_contests, get_contest
 
 
@@ -52,7 +52,32 @@ class ContestDetailsView(APIView):
     @extend_schema(
         summary="Retrieve a details of contest",
         description="Получение данных одного конкурса по его id",
-        responses={},
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=ContestDetailsResponseSerializer()
+            ),
+            400: OpenApiResponse(
+                description="Ошибка клиента при запросе данных",
+                response=ErrorResponseSerializer()
+            ),
+            401: OpenApiResponse(
+                description="Необходима аутентификация",
+                response=ErrorResponseSerializer()
+            ),
+            403: OpenApiResponse(
+                description="Доступ запрещён",
+                response=ErrorResponseSerializer()
+            ),
+            404: OpenApiResponse(
+                description="Не найдено",
+                response=ErrorResponseSerializer()
+            ),
+            500: OpenApiResponse(
+                description="Ошибка сервера при обработке запроса",
+                response=ErrorResponseSerializer()
+            ),
+        },
         tags=['Contests']
     )
     def get(self, request, contest_id):

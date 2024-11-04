@@ -108,3 +108,22 @@ class ContestsSerializer(serializers.Serializer):
         return Contest(**validated_data)
 
 
+class ContestDetailsSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    created_at = serializers.DateField(format="%d.%m.%Y")
+    status_id = serializers.UUIDField()
+    status_name = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    profession = serializers.CharField()
+    category = serializers.CharField()
+    attachments = AttachmentsSerializer()
+
+
+class ContestDetailsResponseSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает детали конкурса по его id """
+    detail = DetailSerializer()
+    data = ContestDetailsSerializer()
+    info = InfoSerializer()
