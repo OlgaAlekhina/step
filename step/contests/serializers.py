@@ -127,3 +127,24 @@ class ContestDetailsResponseSerializer(serializers.Serializer):
     detail = DetailSerializer()
     data = ContestDetailsSerializer()
     info = InfoSerializer()
+
+
+class ContestsListSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    status_id = serializers.UUIDField()
+    status_name = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    brief = serializers.CharField()
+    profession = serializers.CharField()
+    projects = serializers.CharField()
+    konkurs_category = serializers.CharField()
+
+
+class GetContestsListSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает список конкурсов по заданным параметрам."""
+    detail = DetailSerializer()
+    data = ContestsListSerializer(many=True)
+    info = InfoSerializer()
