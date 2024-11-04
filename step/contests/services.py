@@ -150,6 +150,8 @@ def get_contest(token, contest_id):
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
         response_data = response.json().get('data', [])
+        if not response_data:
+            return []
         contest_serializer = ContestsSerializer(data=response_data)
         contest_serializer.is_valid()
         contest = contest_serializer.save()

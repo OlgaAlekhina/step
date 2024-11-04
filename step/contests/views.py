@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           GetContestsListSerializer)
@@ -86,6 +87,8 @@ class ContestDetailsView(APIView):
     def get(self, request, contest_id):
         access_token = get_token()
         contest_data = get_contest(access_token, contest_id)
+        if not contest_data:
+            return Response({'detail': dict(code='Not Found', message='Конкурс не найден.')}, status=status.HTTP_404_NOT_FOUND)
         return Response(contest_data[0], status=contest_data[1])
 
 
