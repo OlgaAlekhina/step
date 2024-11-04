@@ -4,13 +4,14 @@ from datetime import datetime
 import requests
 from django.conf import settings
 from requests.exceptions import RequestException, HTTPError
+from .serializers import ContestsSerializer
 
 token_cache = {'access_token': None, 'last_update': 0}
 
 base_url = settings.BASE_URL
 username = settings.USERNAME
 password = settings.PASSWORD
-node_id = settings.NODE_ID
+node_id_default = settings.NODE_ID
 
 process_contests_id = settings.PROCESS_CONTESTS_ID
 
@@ -53,7 +54,7 @@ def get_archive_contests(token):
     """Получение всех конкурсов со статусом завершен. Реализация функционала Архив конкурсов."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id}"
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
 
     try:
         completed_contests = {
@@ -98,10 +99,153 @@ def get_archive_contests(token):
             }
             )
 
+        # Эта часть нужна, чтобы использовать сериализаторы для обработки данных из Райды:
+        # contest_serializer = ContestsSerializer(data=response_data, many=True)
+        # contest_serializer.is_valid()
+        # contests = contest_serializer.save()
+        # result_data = []
+        # for contest in contests:
+        #     result_data.append(contest.__dict__)
+
         result_data = {
             "detail": {
                 "code": "OK",
                 "message": "Список всех конкурсов со статусом Завершен"
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "count": len(result_data),
+                "compression_algorithm": "lossy"
+            }
+        }
+
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+
+
+def get_contest(token, contest_id):
+    """Получение данных одного конкурса по его id."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+        response_data = response.json().get('data', [])
+        contest_serializer = ContestsSerializer(data=response_data)
+        contest_serializer.is_valid()
+        contest = contest_serializer.save()
+        result_data = contest.__dict__
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": "Данные конкурса"
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "compression_algorithm": "lossy"
+            }
+        }
+
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+
+
+def get_contests(token, process_ids, status_ids, node_id=node_id_default):
+    """Получение всех конкурсов по переданным параметрам."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id}"
+
+    try:
+        formatted_ids = "', '".join(process_ids)
+
+        if status_ids:
+            formatted_status_ids = "', '".join(status_ids)
+            status_condition = f"AND status.id IN ('{formatted_status_ids}')"
+        else:
+            status_condition = ""
+
+        completed_contests = {
+            "rql": f"process.id IN ('{formatted_ids}') {status_condition}"
+        }
+
+        response = requests.post(url, json=completed_contests, headers=headers)
+        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+
+        response_data = response.json().get('data', [])
+
+        result_data = []
+        for contest in response_data:
+            status_name = contest['status'].get('name', None) if contest.get('status', None) is not None else None
+            status_id = contest['status'].get('id', None) if contest.get('status', None) is not None else None
+
+            custom_fields = contest.get('custom_fields', {})
+            cf_deadline = custom_fields.get('cf_deadline')
+            cf_award = custom_fields.get('cf_award')
+            cf_brief = custom_fields.get('cf_brief')
+            cf_profession = custom_fields.get('cf_profession')
+            cf_projects = custom_fields.get('cf_projects')
+            cf_konkurs_category = custom_fields.get('cf_konkurs_category')
+
+            result_data.append(
+                {
+                    'id': contest.get('id', None),
+                    'title': contest.get('title', None),
+                    'description': contest.get('description', None),  # под вопросом
+                    'status_id': status_id,  # под вопросом
+                    'status_name': status_name,
+                    'deadline': datetime_convert(cf_deadline),  # под вопросом
+                    'award': cf_award,
+                    'brief': cf_brief,
+                    'profession': cf_profession,
+                    'projects': cf_projects,
+                    'konkurs_category': cf_konkurs_category,
+
+                }
+            )
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": "Список всех конкурсов/задач по заданному статусу или статусам"
             },
             "data": result_data,
             "info": {
