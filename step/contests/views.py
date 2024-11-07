@@ -97,7 +97,7 @@ class ContestsView(APIView):
 
     @extend_schema(
         summary="Retrieve a list of contests",
-        description="Получение списка конкурсов/задач по заданному статусу или статусам",
+        description="Получение списка конкурсов по заданному статусу или статусам, проекту или проектам",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -126,16 +126,13 @@ class ContestsView(APIView):
         },
         tags=['Contests']
     )
-    def get(self, request):
+    def get(self, request, process_id):
         access_token = get_token()
 
-        # Получаем параметры из запроса
-        node_id = request.query_params.get('node_id')
-        process_ids = request.query_params.getlist('process_id')
         status_ids = request.query_params.getlist('status_id')
+        projects_ids = request.query_params.getlist('project_id')
 
-        # Проверяем наличие обязательного параметра node_id и process_contests_ids
-        if not process_ids:
+        if not process_id:
             return Response({
                 "detail": {
                     "code": "BAD_REQUEST",
@@ -143,26 +140,11 @@ class ContestsView(APIView):
                 }
             }, status=400)
 
-        # Проверяем наличие хотя бы одного status_id
-        # if not status_ids:
-        #     return Response({
-        #         "detail": {
-        #             "code": "BAD_REQUEST",
-        #             "message": "Необходим хотя бы один параметр 'status_id'."
-        #         }
-        #     }, status=400)
+        result_data = get_contests(
+            token=access_token,
+            process_id=process_id,
+            status_ids=status_ids,
+            projects_ids=projects_ids
+        )
 
-        if node_id is None:
-            result_data = get_contests(
-                token=access_token,
-                process_ids=process_ids,
-                status_ids=status_ids
-            )
-        else:
-            result_data = get_contests(
-                token=access_token,
-                node_id=node_id,
-                process_ids=process_ids,
-                status_ids=status_ids
-            )
         return Response(result_data[0], status=result_data[1])

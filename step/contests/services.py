@@ -43,11 +43,22 @@ def get_token():
 
 def datetime_convert(date, format_date='%d.%m.%Y'):
     """Преобразование даты в заданный формат."""
-    if date is not None:
-        result = datetime.fromisoformat(date.rstrip("Z") + "+00:00").strftime(format_date)
-    else:
+
+    if date is None or not date:
         result = date
+    else:
+        result = datetime.fromisoformat(date.rstrip("Z") + "+00:00").strftime(format_date)
     return result
+
+
+def get_condition(parameters_ids, construction):
+    if parameters_ids:
+        formatted_parameter_ids = "', '".join(parameters_ids)
+
+        parameter_condition = f" {construction}('{formatted_parameter_ids}')"
+    else:
+        parameter_condition = ""
+    return parameter_condition
 
 
 def get_archive_contests(token):
@@ -190,30 +201,45 @@ def get_contest(token, contest_id):
         return result_data, response.status_code
 
 
-def get_contests(token, process_ids, status_ids, node_id=node_id_default):
+def get_contests(token, process_id, status_ids, projects_ids):
     """Получение всех конкурсов по переданным параметрам."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id}"
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
 
     try:
-        formatted_ids = "', '".join(process_ids)
 
-        if status_ids:
-            formatted_status_ids = "', '".join(status_ids)
-            status_condition = f"AND status.id IN ('{formatted_status_ids}')"
-        else:
-            status_condition = ""
+        status_condition = get_condition(
+            parameters_ids=status_ids,
+            construction='AND status.id IN '
+        )
+        project_condition = get_condition(
+            parameters_ids=projects_ids,
+            construction='AND custom_fields.cf_projects IN '
+        )
 
         completed_contests = {
-            "rql": f"process.id IN ('{formatted_ids}') {status_condition}"
+            "rql": f"process.id = '{process_id}'{status_condition}{project_condition}"
+            #     "fields": [
+            #         "id",
+            #         "title",
+            #         "description",
+            #         "status.id",
+            #         "status.name",
+            #         "custom_fields.cf_deadline",
+            #         "custom_fields.cf_award",
+            #         "custom_fields.cf_brief",
+            #         "custom_fields.cf_konkurs_category",
+            #         "custom_fields.cf_projects",
+            #         "custom_fields.cf_profession",
+            #     ]
         }
 
         response = requests.post(url, json=completed_contests, headers=headers)
         response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
 
         response_data = response.json().get('data', [])
-
+        # result_data = response_data
         result_data = []
         for contest in response_data:
             status_name = contest['status'].get('name', None) if contest.get('status', None) is not None else None
