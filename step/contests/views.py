@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          GetContestsListSerializer)
+                          GetContestsListSerializer, QueryParamsSerializer)
 
 from .services import get_token, get_archive_contests, get_contest, get_contests
 
@@ -96,6 +96,9 @@ class ContestsView(APIView):
     parser_classes = [JSONParser]
 
     @extend_schema(
+        parameters=[
+            QueryParamsSerializer,
+        ],
         summary="Retrieve a list of contests",
         description="Получение списка конкурсов по заданному статусу или статусам, проекту или проектам",
         responses={

@@ -12,8 +12,13 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
     return result
 
 
+class QueryParamsSerializer(serializers.Serializer):
+    status_id = serializers.ListSerializer(child=serializers.UUIDField(), required=False)
+    project_id = serializers.ListSerializer(child=serializers.CharField(), required=False)
+
+
 class ErrorDetailSerializer(serializers.Serializer):
-    code = serializers.CharField(required=True)
+    code = serializers.CharField()
     message = serializers.CharField(required=True)
 
 
