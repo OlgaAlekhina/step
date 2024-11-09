@@ -33,11 +33,27 @@ deploy:
     - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
-    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp && chmod 700 ~/.ssh/tmp
-    - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp ssh-add -
+    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp1 && chmod 700 ~/.ssh/tmp1
+    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp2 && chmod 700 ~/.ssh/tmp2
+    - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp1 ssh-add -
+    - echo "$SSH_PRIVATE_KEY_TEST" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp2 ssh-add -
+    - '[[ -f /.dockerenv ]] && echo -e "Host cloveri.gate HostName 87.239.109.136	User o.alekhina	IdentityFile ~/.ssh/tmp1 StrictHostKeyChecking no" > ~/.ssh/config'
+
+# Host cloveri.host
+#     HostName 10.0.0.45
+# 	User devops
+#     ProxyJump cloveri.gate
+#     IdentityFile ~/.ssh/tmp2
+
+# Host cloveri.*
+#     UserKnownHostsFile /dev/null
+#     StrictHostKeyChecking no
+#     BatchMode yes
+#     PasswordAuthentication no"
     # - echo "${SSH_PRIVATE_KEY_GATE}" | tr -d '\r' | ssh-add - > /dev/null
   script:
     - echo "Deploying backend"
-    - ssh -o StrictHostKeyChecking=no o.alekhina@87.239.109.136
+    - ssh cloveri.gate
+    # - ssh -o StrictHostKeyChecking=no o.alekhina@87.239.109.136
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
