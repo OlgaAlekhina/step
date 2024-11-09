@@ -34,7 +34,8 @@ deploy:
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
     - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp && chmod 700 ~/.ssh/tmp
-    - echo "${SSH_PRIVATE_KEY_GATE}" | tr -d '\r' | ssh-add - > /dev/null
+    - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp ssh-add -
+    # - echo "${SSH_PRIVATE_KEY_GATE}" | tr -d '\r' | ssh-add - > /dev/null
   script:
     - echo "Deploying backend"
     - ssh -o StrictHostKeyChecking=no o.alekhina@87.239.109.136
