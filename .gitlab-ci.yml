@@ -55,7 +55,7 @@ deploy:
     # - echo "${SSH_PRIVATE_KEY_GATE}" | tr -d '\r' | ssh-add - > /dev/null
   script:
     - echo "Deploying backend"
-    - ssh -F cloveri.host
+    - ssh cloveri.host
     # - ssh -o StrictHostKeyChecking=no o.alekhina@87.239.109.136
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
