@@ -38,7 +38,7 @@ deploy:
     - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp1 ssh-add -
     - cat "$SSH_CONFIG"
     - cp "$SSH_CONFIG" ~/.ssh/config 
-    - echo "$SSH_PRIVATE_KEY_TEST" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp2 ssh-add -
+    # - echo "$SSH_PRIVATE_KEY_TEST" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp2 ssh-add -
     # - '[[ -f /.dockerenv ]] && echo -e "Host cloveri.gate HostName 87.239.109.136	User o.alekhina	IdentityFile ~/.ssh/tmp1 StrictHostKeyChecking no" > ~/.ssh/config'
 
 # Host cloveri.host
@@ -55,7 +55,7 @@ deploy:
     # - echo "${SSH_PRIVATE_KEY_GATE}" | tr -d '\r' | ssh-add - > /dev/null
   script:
     - echo "Deploying backend"
-    - ssh cloveri.gate
+    - ssh -F cloveri.host
     # - ssh -o StrictHostKeyChecking=no o.alekhina@87.239.109.136
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
