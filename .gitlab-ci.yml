@@ -33,8 +33,8 @@ deploy:
     - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
-    # - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp1 && chmod 700 ~/.ssh/tmp1
-    # - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp2 && chmod 700 ~/.ssh/tmp2
+    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp1 && chmod 700 ~/.ssh/tmp1
+    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp2 && chmod 700 ~/.ssh/tmp2
     # - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp1 ssh-add -
     - cat "$SSH_CONFIG"
     - cp "$SSH_CONFIG" ~/.ssh/config 
