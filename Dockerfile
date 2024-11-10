@@ -9,7 +9,8 @@ RUN addgroup --gid 1000 app &&\
 
 WORKDIR /app
 
-COPY . .
+COPY ./step .
+COPY ./requirements.txt .
 
 RUN chown -R app:app /app
 
