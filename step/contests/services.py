@@ -1,6 +1,9 @@
 import time
 from datetime import datetime
 
+import jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
+
 import requests
 from django.conf import settings
 from requests.exceptions import RequestException, HTTPError
@@ -15,8 +18,39 @@ node_id_default = settings.NODE_ID
 
 process_contests_id = settings.PROCESS_CONTESTS_ID
 
+jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
+jwt_algorithm = settings.JWT_ALGORITHM
+
 #   Статус конкурса
 status_id_done = settings.STATUS_ID_DONE
+
+
+def get_user(token):
+    public_key = jwt_public_key.replace("\\n", "\n").encode()
+    try:
+        payload = jwt.decode(token, public_key, jwt_algorithm)
+        data = {
+            'user_id': payload.get('user_id', None),
+            'profile_id': payload.get('profile_id', None),
+            'account_id': payload.get('account_id', None)
+        }
+        return data, 200
+    except ExpiredSignatureError:
+        data = {
+            "detail": {
+                "code": "TOKEN_EXPIRED",
+                "message": "Токен устарел"
+            }
+        }
+        return data, 401
+    except InvalidTokenError as e:
+        data = {
+            "detail": {
+                "code": "TOKEN_INCORRECT",
+                "message": "Некорректный токен"
+            }
+        }
+        return data, 401
 
 
 def get_token():

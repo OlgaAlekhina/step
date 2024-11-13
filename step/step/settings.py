@@ -96,6 +96,10 @@ PROCESS_CONTESTS_ID = str(os.getenv('PROCESS_CONTESTS_ID'))
 #   Статусы конкурса
 STATUS_ID_DONE = str(os.getenv('STATUS_ID_DONE'))
 
+# Для расшифровки JWT-токенов
+ACCESS_TOKEN_PUBLIC_KEY = os.getenv('ACCESS_TOKEN_PUBLIC_KEY2')
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
+
 WSGI_APPLICATION = 'step.wsgi.application'
 
 # Database

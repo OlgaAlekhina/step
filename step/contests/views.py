@@ -88,7 +88,7 @@ class ContestDetailsView(APIView):
         access_token = get_token()
         contest_data = get_contest(access_token, contest_id)
         if not contest_data:
-            return Response({'detail': dict(code='Not Found', message='Конкурс не найден.')}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')}, status=status.HTTP_404_NOT_FOUND)
         return Response(contest_data[0], status=contest_data[1])
 
 
