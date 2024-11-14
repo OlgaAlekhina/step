@@ -75,6 +75,10 @@ def get_token():
         return token_cache['access_token']
 
 
+def get_application_status(token, contest_id, user_id):
+    return 'Test'
+
+
 def datetime_convert(date, format_date='%d.%m.%Y'):
     """Преобразование даты в заданный формат."""
 

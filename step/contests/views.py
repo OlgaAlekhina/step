@@ -8,7 +8,7 @@ from rest_framework import status
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           GetContestsListSerializer, QueryParamsSerializer)
 
-from .services import get_token, get_archive_contests, get_contest, get_contests
+from .services import get_token, get_archive_contests, get_contest, get_contests, get_user, get_application_status
 
 
 class ArchiveView(APIView):
@@ -86,10 +86,19 @@ class ContestDetailsView(APIView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
+        application_status = None
+        auth_header = request.META.get('HTTP_AUTHORIZATION', None)
+        if auth_header:
+            payload = get_user(auth_header)
+            if payload[1] == 401:
+                return Response(payload[0], status=status.HTTP_401_UNAUTHORIZED)
+            user_id = payload[0].get('user_id')
+            application_status = get_application_status(access_token, contest_id, user_id)
         contest_data = get_contest(access_token, contest_id)
         if not contest_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')}, status=status.HTTP_404_NOT_FOUND)
-        return Response(contest_data[0], status=contest_data[1])
+        response_data = contest_data[0]['data']['application_status'] = application_status
+        return Response(response_data, status=contest_data[1])
 
 
 class ContestsView(APIView):
