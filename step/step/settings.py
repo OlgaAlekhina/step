@@ -92,6 +92,7 @@ PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 NODE_ID = str(os.getenv('NODE_ID'))
 
 PROCESS_CONTESTS_ID = str(os.getenv('PROCESS_CONTESTS_ID'))
+PROCESS_DOCONTESTS_ID = os.getenv('PROCESS_DOCONTESTS_ID')
 
 #   Статусы конкурса
 STATUS_ID_DONE = str(os.getenv('STATUS_ID_DONE'))

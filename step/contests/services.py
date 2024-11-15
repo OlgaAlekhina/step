@@ -17,6 +17,7 @@ password = settings.PASSWORD
 node_id_default = settings.NODE_ID
 
 process_contests_id = settings.PROCESS_CONTESTS_ID
+process_docontests_id = settings.PROCESS_DOCONTESTS_ID
 
 jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
 jwt_algorithm = settings.JWT_ALGORITHM
@@ -25,14 +26,15 @@ jwt_algorithm = settings.JWT_ALGORITHM
 status_id_done = settings.STATUS_ID_DONE
 
 
+#   расшифровывает JWT-токен, пришедший в заголовке авторизации
 def get_user(token):
     public_key = jwt_public_key.replace("\\n", "\n").encode()
     try:
         payload = jwt.decode(token, public_key, jwt_algorithm)
         data = {
-            'user_id': payload.get('user_id', None),
-            'profile_id': payload.get('profile_id', None),
-            'account_id': payload.get('account_id', None)
+            'user_id': payload.get('sub').get('user_id', None),
+            'profile_id': payload.get('sub').get('profile_id', None),
+            'account_id': payload.get('sub').get('account_id', None)
         }
         return data, 200
     except ExpiredSignatureError:
@@ -75,8 +77,25 @@ def get_token():
         return token_cache['access_token']
 
 
+#   проверяет статус заявки пользователя на участие в конкурсе
 def get_application_status(token, contest_id, user_id):
-    return 'Test'
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    try:
+        response = requests.post(url, headers=headers, json={
+            "rql": f"process.id = '{process_docontests_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
+            "fields": []})
+        response_data = response.json().get('data', [])
+        if response_data:
+            status = response_data[0].get('status').get('name', None)
+            if status in ('Новая', 'Одобрено'):
+                return 'Решение не отправлено'
+            elif status == 'Задание выполнено':
+                return 'Решение отправлено'
+        return None
+    except:
+        return None
 
 
 def datetime_convert(date, format_date='%d.%m.%Y'):
