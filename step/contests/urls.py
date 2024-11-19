@@ -1,9 +1,12 @@
 from django.urls import path
 
-from .views import ArchiveView, ContestDetailsView, ContestsView
+from .views import (
+    ArchiveContestsView, ContestDetailsView, ActiveContestsView, UserTasksView
+)
 
 urlpatterns = [
-    path('api/step/contests/archieve/', ArchiveView.as_view(), name='archive'),
-    path('api/step/contests/<uuid:contest_id>/', ContestDetailsView.as_view(), name='contest_details'),
-    path('api/contests/<uuid:process_id>/', ContestsView.as_view(), name='contests'),
+    path('api/contests/<uuid:contest_id>/', ContestDetailsView.as_view(), name='contest_details'),
+    path('api/contests/archive/', ArchiveContestsView.as_view(), name='contest_archive'),
+    path('api/contests/active/', ActiveContestsView.as_view(), name='contest_active'),
+    path('api/contests/user_tasks/', UserTasksView.as_view(), name='task_active'),
 ]

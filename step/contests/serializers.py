@@ -47,7 +47,7 @@ class DetailSerializer(serializers.Serializer):
 class InfoSerializer(serializers.Serializer):
     api_version = serializers.CharField(required=True)
     count = serializers.IntegerField()
-    compression_algorithm = serializers.CharField()
+    # compression_algorithm = serializers.CharField()
 
 
 class GetArchiveSerializer(serializers.Serializer):

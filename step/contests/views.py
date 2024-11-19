@@ -1,22 +1,38 @@
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from django.conf import settings
 
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
-from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          GetContestsListSerializer, QueryParamsSerializer)
+from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer)
 
-from .services import get_token, get_archive_contests, get_contest, get_contests
+from .services import (get_token, get_contest, get_contests, get_user, get_application_status, get_tasks)
+
+# ID Конкурсов
+process_contests_id = settings.PROCESS_CONTESTS_ID
+process_participation_contest_id = settings.PROCESS_PARTICIPATION_CONTEST_ID
+
+# ID Статусов конкурса
+status_id_new = settings.STATUS_ID_NEW
+status_id_rejection = settings.STATUS_ID_REJECTION
+status_id_sum_results = settings.STATUS_ID_SUM_RESULTS
+status_id_voting = settings.STATUS_ID_VOTING
+status_id_acceptance_works = settings.STATUS_ID_ACCEPTANCE_WORKS
+status_id_done = settings.STATUS_ID_DONE
+status_id_acceptance_works_done = settings.STATUS_ID_ACCEPTANCE_WORKS_DONE
+status_id_no_winner = settings.STATUS_ID_NO_WINNER
+
+user_id_test = 'seghstr3345ega'
 
 
-class ArchiveView(APIView):
+class ArchiveContestsView(APIView):
     parser_classes = [JSONParser]
 
     @extend_schema(
         summary="Retrieve a list of contests",
-        description="Получение списка всех конкурсов со статусом Завершен",
+        description="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -44,11 +60,72 @@ class ArchiveView(APIView):
             ),
         },
 
-        tags=['Contests']  # Archive на выбор
+        tags=['Contests']
     )
     def get(self, request):
         access_token = get_token()
-        result_data = get_archive_contests(access_token)
+        result_data = get_contests(
+            token=access_token,
+            process_id=process_contests_id,
+            status_ids=(status_id_done, status_id_no_winner),
+            # status_ids=('Завершен', 'Победитель не выбран'),  # Если передавать name а не id
+            # projects_ids=None,
+            # projects_ids='step',
+            projects_ids=('step', 'start'),
+            message="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов."
+        )
+        # result_data = get_archive_contests(access_token)
+        return Response(result_data[0], status=result_data[1])
+
+
+class ActiveContestsView(APIView):
+    parser_classes = [JSONParser]
+
+    @extend_schema(
+        summary="Retrieve a list of contests",
+        description="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы.",
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=GetArchiveSerializer()
+            ),
+            400: OpenApiResponse(
+                description="Ошибка клиента при запросе данных",
+                response=ErrorResponseSerializer()
+            ),
+            401: OpenApiResponse(
+                description="Необходима аутентификация",
+                response=ErrorResponseSerializer()
+            ),
+            403: OpenApiResponse(
+                description="Доступ запрещён",
+                response=ErrorResponseSerializer()
+            ),
+            404: OpenApiResponse(
+                description="Не найдено",
+                response=ErrorResponseSerializer()
+            ),
+            500: OpenApiResponse(
+                description="Ошибка сервера при обработке запроса",
+                response=ErrorResponseSerializer()
+            ),
+        },
+
+        tags=['Contests']
+    )
+    def get(self, request):
+        access_token = get_token()
+        result_data = get_contests(
+            token=access_token,
+            process_id=process_contests_id,
+            status_ids=status_id_acceptance_works,
+            # status_ids='Прием работ',  # Если передавать name а не id
+            # projects_ids=None,
+            # projects_ids='step',
+            projects_ids=('step', 'start'),
+            message="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы."
+        )
+        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
 
 
@@ -86,25 +163,33 @@ class ContestDetailsView(APIView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
+        application_status = None
+        auth_header = request.META.get('HTTP_AUTHORIZATION', None)
+        if auth_header:
+            payload = get_user(auth_header)
+            if payload[1] == 401:
+                return Response(payload[0], status=status.HTTP_401_UNAUTHORIZED)
+            user_id = payload[0].get('user_id')
+            application_status = get_application_status(access_token, contest_id, user_id)
         contest_data = get_contest(access_token, contest_id)
         if not contest_data:
-            return Response({'detail': dict(code='Not Found', message='Конкурс не найден.')}, status=status.HTTP_404_NOT_FOUND)
-        return Response(contest_data[0], status=contest_data[1])
+            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
+                            status=status.HTTP_404_NOT_FOUND)
+        response_data = contest_data[0]
+        response_data['data'].update({'application_status': application_status})
+        return Response(response_data, status=contest_data[1])
 
 
-class ContestsView(APIView):
+class UserTasksView(APIView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        parameters=[
-            QueryParamsSerializer,
-        ],
         summary="Retrieve a list of contests",
-        description="Получение списка конкурсов по заданному статусу или статусам, проекту или проектам",
+        description="Получение списка всех заданий пользователя. Мои задания.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=GetContestsListSerializer()
+                response=GetArchiveSerializer()
             ),
             400: OpenApiResponse(
                 description="Ошибка клиента при запросе данных",
@@ -127,27 +212,28 @@ class ContestsView(APIView):
                 response=ErrorResponseSerializer()
             ),
         },
+
         tags=['Contests']
     )
-    def get(self, request, process_id):
+    def get(self, request):
         access_token = get_token()
-
-        status_ids = request.query_params.getlist('status_id')
-        projects_ids = request.query_params.getlist('project_id')
-
-        if not process_id:
-            return Response({
-                "detail": {
-                    "code": "BAD_REQUEST",
-                    "message": "Необходимо передать параметр 'process_id'."
-                }
-            }, status=400)
-
-        result_data = get_contests(
+        result_data = get_tasks(
             token=access_token,
-            process_id=process_id,
-            status_ids=status_ids,
-            projects_ids=projects_ids
+            process_id=process_contests_id,
+            # status_ids=None,
+            status_ids=(
+                status_id_acceptance_works,
+                status_id_acceptance_works_done,
+                status_id_voting,
+                status_id_sum_results,
+                status_id_done
+            ),
+            # status_ids='Прием работ',  # Если передавать name а не id
+            projects_ids=None,
+            user_id=user_id_test,
+            # projects_ids='step',
+            # projects_ids=('step', 'start'),
+            message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, Подведение итогов, Завершен. Для раздела мои задания."
         )
-
+        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
