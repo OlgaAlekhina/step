@@ -22,6 +22,8 @@ process_participation_contest_id = settings.PROCESS_PARTICIPATION_CONTEST_ID
 process_contests_id = settings.PROCESS_CONTESTS_ID
 process_docontests_id = settings.PROCESS_DOCONTESTS_ID
 
+status_id_rejection = settings.STATUS_ID_REJECTION
+
 jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
 jwt_algorithm = settings.JWT_ALGORITHM
 
@@ -290,7 +292,7 @@ def get_contests(
 def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers: Dict) -> bool:
     """Функция для проверки есть ли у данного конкурса задача с текущим пользователем или нет."""
     tasks = {
-        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'"
+        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}' AND status.id != '{status_id_rejection}'"
     }
     response = requests.post(url, json=tasks, headers=headers)
     result = response.json().get('data', [])
