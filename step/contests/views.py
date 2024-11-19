@@ -5,6 +5,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework import permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer)
 
@@ -130,6 +131,7 @@ class ActiveContestsView(APIView):
 
 
 class ContestDetailsView(APIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     @extend_schema(
         summary="Retrieve a details of contest",
         description="Получение данных одного конкурса по его id",
@@ -164,12 +166,10 @@ class ContestDetailsView(APIView):
     def get(self, request, contest_id):
         access_token = get_token()
         application_status = None
-        auth_header = request.META.get('HTTP_AUTHORIZATION', None)
-        if auth_header:
-            payload = get_user(auth_header)
-            if payload[1] == 401:
-                return Response(payload[0], status=status.HTTP_401_UNAUTHORIZED)
-            user_id = payload[0].get('user_id')
+        # если запрос успешно прошел аутентификацию, получаем id пользователя
+        if request.auth:
+            user_id = request.auth.get('user_id')
+            # проверяем, отправил пользователь решение или нет
             application_status = get_application_status(access_token, contest_id, user_id)
         contest_data = get_contest(access_token, contest_id)
         if not contest_data:
