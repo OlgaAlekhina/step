@@ -98,7 +98,7 @@ def get_application_status(token, contest_id, user_id):
                 return 'Решение не отправлено'
             elif status == 'Задание выполнено':
                 return 'Решение отправлено'
-        return None
+        return 'Не участвует в конкурсе'
     except:
         return None
 
@@ -364,8 +364,14 @@ def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers
     }
     response = requests.post(url, json=tasks, headers=headers)
     result = response.json().get('data', [])
+    if result:
+        status = result[0].get('status').get('name', None)
+        if status in ('Новая', 'Одобрено'):
+            return 'Решение не отправлено'
+        elif status == 'Задание выполнено':
+            return 'Решение отправлено'
 
-    return bool(result)
+    return None
 
 
 def get_tasks(
@@ -457,6 +463,7 @@ def get_tasks(
                         'profession': cf_profession,
                         'projects': cf_projects,
                         'konkurs_category': cf_konkurs_category,
+                        'application_status': task,
 
                     }
                 )

@@ -223,6 +223,7 @@ class QuitContestView(APIView):
 
 
 class UserTasksView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
 
     @extend_schema(
@@ -259,6 +260,7 @@ class UserTasksView(APIView):
     )
     def get(self, request):
         access_token = get_token()
+        user_id = request.auth.get('user_id')
         result_data = get_tasks(
             token=access_token,
             process_id=process_contests_id,
@@ -272,7 +274,7 @@ class UserTasksView(APIView):
             ),
             # status_ids='Прием работ',  # Если передавать name а не id
             projects_ids=None,
-            user_id=user_id_test,
+            user_id=user_id,
             # projects_ids='step',
             # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, Подведение итогов, Завершен. Для раздела мои задания."
