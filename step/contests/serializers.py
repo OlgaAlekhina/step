@@ -57,6 +57,11 @@ class GetArchiveSerializer(serializers.Serializer):
     info = InfoSerializer()
 
 
+class QuitContestSerializer(serializers.Serializer):
+    """Сериализатор для успешного изменения статуса заявки на участие в конкурсе на 'Отказ' """
+    detail = DetailSerializer()
+    info = InfoSerializer()
+
 @dataclass
 class Contest:
     id: str
@@ -80,7 +85,7 @@ class StatusSerializer(serializers.Serializer):
 class CustomFieldsSerializer(serializers.Serializer):
     cf_brief = serializers.CharField(allow_blank=True)
     cf_profession = serializers.CharField(allow_blank=True)
-    cf_deadline = serializers.CharField()
+    cf_deadline = serializers.CharField(allow_blank=True)
     cf_award = serializers.CharField(allow_blank=True)
     cf_konkurs_category = serializers.CharField(allow_blank=True)
 

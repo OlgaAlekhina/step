@@ -4,12 +4,11 @@ from django.conf import settings
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework import permissions
+from rest_framework import status, permissions
 
-from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer)
+from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer, QuitContestSerializer)
 
-from .services import (get_token, get_contest, get_contests, get_user, get_application_status, get_tasks)
+from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_docontest)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -178,6 +177,49 @@ class ContestDetailsView(APIView):
         response_data = contest_data[0]
         response_data['data'].update({'application_status': application_status})
         return Response(response_data, status=contest_data[1])
+
+
+class QuitContestView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(
+        summary="Update status of contest application",
+        description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=QuitContestSerializer()
+            ),
+            400: OpenApiResponse(
+                description="Ошибка клиента при запросе данных",
+                response=ErrorResponseSerializer()
+            ),
+            401: OpenApiResponse(
+                description="Необходима аутентификация",
+                response=ErrorResponseSerializer()
+            ),
+            403: OpenApiResponse(
+                description="Доступ запрещён",
+                response=ErrorResponseSerializer()
+            ),
+            404: OpenApiResponse(
+                description="Не найдено",
+                response=ErrorResponseSerializer()
+            ),
+            500: OpenApiResponse(
+                description="Ошибка сервера при обработке запроса",
+                response=ErrorResponseSerializer()
+            ),
+        },
+        tags=['Contests']
+    )
+    def patch(self, request, contest_id):
+        access_token = get_token()
+        user_id = request.auth.get('user_id')
+        response_data = patch_docontest(access_token, contest_id, user_id)
+        if not response_data:
+            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
+                            status=status.HTTP_404_NOT_FOUND)
+        return Response(response_data[0], status=response_data[1])
 
 
 class UserTasksView(APIView):

@@ -32,32 +32,32 @@ status_id_done = settings.STATUS_ID_DONE
 
 
 #   расшифровывает JWT-токен, пришедший в заголовке авторизации
-def get_user(token):
-    public_key = jwt_public_key.replace("\\n", "\n").encode()
-    try:
-        payload = jwt.decode(token, public_key, jwt_algorithm)
-        data = {
-            'user_id': payload.get('sub').get('user_id', None),
-            'profile_id': payload.get('sub').get('profile_id', None),
-            'account_id': payload.get('sub').get('account_id', None)
-        }
-        return data, 200
-    except ExpiredSignatureError:
-        data = {
-            "detail": {
-                "code": "TOKEN_EXPIRED",
-                "message": "Токен устарел"
-            }
-        }
-        return data, 401
-    except InvalidTokenError as e:
-        data = {
-            "detail": {
-                "code": "TOKEN_INCORRECT",
-                "message": "Некорректный токен"
-            }
-        }
-        return data, 401
+# def get_user(token):
+#     public_key = jwt_public_key.replace("\\n", "\n").encode()
+#     try:
+#         payload = jwt.decode(token, public_key, jwt_algorithm)
+#         data = {
+#             'user_id': payload.get('sub').get('user_id', None),
+#             'profile_id': payload.get('sub').get('profile_id', None),
+#             'account_id': payload.get('sub').get('account_id', None)
+#         }
+#         return data, 200
+#     except ExpiredSignatureError:
+#         data = {
+#             "detail": {
+#                 "code": "TOKEN_EXPIRED",
+#                 "message": "Токен устарел"
+#             }
+#         }
+#         return data, 401
+#     except InvalidTokenError as e:
+#         data = {
+#             "detail": {
+#                 "code": "TOKEN_INCORRECT",
+#                 "message": "Некорректный токен"
+#             }
+#         }
+#         return data, 401
 
 
 def get_token():
@@ -153,6 +153,74 @@ def get_contest(token, contest_id):
         }
 
         return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+
+
+def patch_docontest(token, contest_id, user_id):
+    """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    try:
+        response = requests.post(url, headers=headers, json={
+            "rql": f"process.id = '{process_docontests_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
+            "fields": []})
+        response.raise_for_status()
+        response_data = response.json().get('data', [])
+        if response_data:
+            docontest_id = response_data[0].get('id', None)
+            url = f"{base_url}/api/tasks/{node_id_default}/{docontest_id}"
+            data = {"status_id": status_id_rejection}
+            try:
+                response = requests.patch(url, headers=headers, json=data)
+                response.raise_for_status()
+                result_data = {
+                    "detail": {
+                        "code": "OK",
+                        "message": "Статус заявки изменен на 'Отказ'"
+                    },
+                    "info": {
+                        "api_version": "0.0.1",
+                        "compression_algorithm": "lossy"
+                    }
+                }
+                return result_data, response.status_code
+            except HTTPError as http_err:
+                result_data = {
+                    "detail": {
+                        "code": f"HTTP_ERROR - {response.status_code}",
+                        "message": str(http_err)
+                    }
+                }
+                return result_data, response.status_code
+
+            except RequestException as err:
+                result_data = {
+                    "detail": {
+                        "code": f"REQUEST_ERROR - {response.status_code}",
+                        "message": str(err)
+                    }
+                }
+                return result_data, response.status_code
+
+        return None
 
     except HTTPError as http_err:
         result_data = {
