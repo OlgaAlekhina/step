@@ -31,35 +31,6 @@ jwt_algorithm = settings.JWT_ALGORITHM
 status_id_done = settings.STATUS_ID_DONE
 
 
-#   расшифровывает JWT-токен, пришедший в заголовке авторизации
-# def get_user(token):
-#     public_key = jwt_public_key.replace("\\n", "\n").encode()
-#     try:
-#         payload = jwt.decode(token, public_key, jwt_algorithm)
-#         data = {
-#             'user_id': payload.get('sub').get('user_id', None),
-#             'profile_id': payload.get('sub').get('profile_id', None),
-#             'account_id': payload.get('sub').get('account_id', None)
-#         }
-#         return data, 200
-#     except ExpiredSignatureError:
-#         data = {
-#             "detail": {
-#                 "code": "TOKEN_EXPIRED",
-#                 "message": "Токен устарел"
-#             }
-#         }
-#         return data, 401
-#     except InvalidTokenError as e:
-#         data = {
-#             "detail": {
-#                 "code": "TOKEN_INCORRECT",
-#                 "message": "Некорректный токен"
-#             }
-#         }
-#         return data, 401
-
-
 def get_token():
     current_time = time.time()
 
@@ -95,12 +66,12 @@ def get_application_status(token, contest_id, user_id):
         if response_data:
             status = response_data[0].get('status').get('name', None)
             if status in ('Новая', 'Одобрено'):
-                return 'Решение не отправлено'
+                return {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
             elif status == 'Задание выполнено':
-                return 'Решение отправлено'
-        return 'Не участвует в конкурсе'
+                return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+        return {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Не участвует в конкурсе'}
     except:
-        return None
+        return {'code': 'NOT_DEFINED', 'message': 'Не определен'}
 
 
 def datetime_convert(date, format_date='%d.%m.%Y'):

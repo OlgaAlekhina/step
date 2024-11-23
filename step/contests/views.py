@@ -164,7 +164,7 @@ class ContestDetailsView(APIView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
-        application_status = None
+        application_status = {'code': 'NOT_DEFINED', 'message': 'Не определен'}
         # если запрос успешно прошел аутентификацию, получаем id пользователя
         if request.auth:
             user_id = request.auth.get('user_id')
