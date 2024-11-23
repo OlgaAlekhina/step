@@ -183,7 +183,7 @@ class ContestDetailsView(APIView):
 class QuitContestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
-        summary="Update status of contest application",
+        summary="Delete user's contest application",
         description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
         responses={
             200: OpenApiResponse(
@@ -213,12 +213,12 @@ class QuitContestView(APIView):
         },
         tags=['Contests']
     )
-    def patch(self, request, contest_id):
+    def delete(self, request, contest_id):
         access_token = get_token()
         user_id = request.auth.get('user_id')
         response_data = patch_docontest(access_token, contest_id, user_id)
         if not response_data:
-            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
+            return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)
         return Response(response_data[0], status=response_data[1])
 
