@@ -328,7 +328,7 @@ def get_contests(
         return result_data, response.status_code
 
 
-def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers: Dict) -> bool:
+def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers: Dict) -> Union[Dict, None]:
     """Функция для проверки есть ли у данного конкурса задача с текущим пользователем или нет."""
     tasks = {
         "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}' AND status.id != '{status_id_rejection}'"
@@ -338,9 +338,9 @@ def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers
     if result:
         status = result[0].get('status').get('name', None)
         if status in ('Новая', 'Одобрено'):
-            return 'Решение не отправлено'
+            return {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
         elif status == 'Задание выполнено':
-            return 'Решение отправлено'
+            return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
 
     return None
 
