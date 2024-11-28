@@ -23,6 +23,7 @@ process_contests_id = settings.PROCESS_CONTESTS_ID
 process_docontests_id = settings.PROCESS_DOCONTESTS_ID
 
 status_id_rejection = settings.STATUS_ID_REJECTION
+status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
 
 jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
 jwt_algorithm = settings.JWT_ALGORITHM
@@ -328,10 +329,17 @@ def get_contests(
         return result_data, response.status_code
 
 
-def check_task(url: str, process_id: str, contest_id: str, user_id: str, headers: Dict) -> Union[Dict, None]:
+def check_task(
+        url: str,
+        process_id: str,
+        contest_id: str,
+        user_id: str,
+        status_condition: str,
+        headers: Dict
+) -> Union[Dict, None]:
     """Функция для проверки есть ли у данного конкурса задача с текущим пользователем или нет."""
     tasks = {
-        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}' AND status.id != '{status_id_rejection}'"
+        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}' {status_condition}"
     }
     response = requests.post(url, json=tasks, headers=headers)
     result = response.json().get('data', [])
@@ -406,6 +414,7 @@ def get_tasks(
                 process_id=process_participation_contest_id,
                 contest_id=contest.get('id'),
                 user_id=user_id,
+                status_condition=f"AND status.id != '{status_id_rejection}'",
                 headers=headers
             )
 
@@ -436,6 +445,113 @@ def get_tasks(
                         'konkurs_category': cf_konkurs_category,
                         'application_status': task,
 
+                    }
+                )
+            else:
+                continue
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": message
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "count": len(result_data),
+                # "compression_algorithm": "lossy"
+            }
+        }
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+
+        return result_data, response.status_code
+
+
+def get_history(
+        token: str,
+        process_id: str,
+        status_ids: Union[Tuple[str, ...], List[str], str, None],
+        projects_ids: Union[Tuple[str, ...], List[str], str, None],
+        user_id: str,
+        message: str = "Список всех конкурсов/задач по заданному статусу или статусам"
+) -> Tuple[Dict, int]:
+    """Получение всех конкурсов, где участвовал пользователь и загрузил решение."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+
+    try:
+
+        status_condition = get_condition(
+            parameters_ids=status_ids,
+            construction='AND status.id'
+        )
+
+        # Если передавать name а не id
+        # status_condition = get_condition(
+        #     parameters_ids=status_ids,
+        #     construction='AND status.name'
+        # )
+
+        project_condition = get_condition(
+            parameters_ids=projects_ids,
+            construction='AND cf_projects'
+        )
+
+        completed_contests = {
+            "rql": f"process.id = '{process_id}'{status_condition}{project_condition}",
+            "fields": [
+                # "id",
+                # "title",
+                # "custom_fields.cf_deadline",
+            ]
+        }
+
+        response = requests.post(url, json=completed_contests, headers=headers)
+        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+
+        response_data = response.json().get('data', [])
+        result_data = []
+
+        for contest in response_data:
+
+            task = check_task(
+                url=url,
+                process_id=process_participation_contest_id,
+                contest_id=contest.get('id'),
+                user_id=user_id,
+                status_condition=f"AND status.id = '{status_id_task_completed}'",
+                headers=headers
+            )
+
+            if task:
+
+                custom_fields = contest.get('custom_fields', {})
+                cf_deadline = custom_fields.get('cf_deadline')
+
+                result_data.append(  # contest)
+                    {
+                        'id': contest.get('id', None),
+                        'title': contest.get('title', None),
+                        'created_at': datetime_convert(contest.get('created_at', None), format_date='%d %B %Y'),
+                        'deadline': datetime_convert(cf_deadline, format_date='%d %B %Y'),
                     }
                 )
             else:

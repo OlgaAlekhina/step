@@ -6,9 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 
-from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer, QuitContestSerializer)
+from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
+                          QuitContestSerializer)
 
-from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_docontest)
+from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_docontest,
+                       get_history)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -131,6 +133,7 @@ class ActiveContestsView(APIView):
 
 class ContestDetailsView(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
     @extend_schema(
         summary="Retrieve a details of contest",
         description="Получение данных одного конкурса по его id",
@@ -182,6 +185,7 @@ class ContestDetailsView(APIView):
 
 class QuitContestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         summary="Delete user's contest application",
         description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
@@ -279,6 +283,63 @@ class UserTasksView(APIView):
             # projects_ids='step',
             # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, Подведение итогов, Завершен. Для раздела мои задания."
+        )
+        # result_data = get_archive_contests(access_token)
+        return Response(result_data[0], status=result_data[1])
+
+
+class UserHistoryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @extend_schema(
+        summary="Retrieve a list of contests",
+        description="Получение списка всех завершенных конкурсов, где пользователя участвовал. История участия.",
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=GetArchiveSerializer()
+            ),
+            400: OpenApiResponse(
+                description="Ошибка клиента при запросе данных",
+                response=ErrorResponseSerializer()
+            ),
+            401: OpenApiResponse(
+                description="Необходима аутентификация",
+                response=ErrorResponseSerializer()
+            ),
+            403: OpenApiResponse(
+                description="Доступ запрещён",
+                response=ErrorResponseSerializer()
+            ),
+            404: OpenApiResponse(
+                description="Не найдено",
+                response=ErrorResponseSerializer()
+            ),
+            500: OpenApiResponse(
+                description="Ошибка сервера при обработке запроса",
+                response=ErrorResponseSerializer()
+            ),
+        },
+
+        tags=['Contests']
+    )
+    def get(self, request):
+        access_token = get_token()
+        user_id = request.auth.get('user_id')
+        result_data = get_history(
+            token=access_token,
+            process_id=process_contests_id,
+            # status_ids=None,
+            status_ids=(
+                status_id_done
+            ),
+            # status_ids='Прием работ',  # Если передавать name а не id
+            projects_ids=None,
+            user_id=user_id,
+            # projects_ids='step',
+            # projects_ids=('step', 'start'),
+            message="Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
         )
         # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
