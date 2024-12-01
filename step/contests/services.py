@@ -70,7 +70,7 @@ def get_application_status(token, contest_id, user_id):
                 return {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
             elif status == 'Задание выполнено':
                 return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
-        return {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Не участвует в конкурсе'}
+        return {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
     except:
         return {'code': 'NOT_DEFINED', 'message': 'Не определен'}
 
@@ -345,11 +345,35 @@ def check_task(
     result = response.json().get('data', [])
     if result:
         status = result[0].get('status').get('name', None)
+        application_id = result[0].get('id', None)
+        solution_link = result[0].get('custom_fields').get('cf_konkurs_link', None)
         if status in ('Новая', 'Одобрено'):
-            return {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+            application_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
         elif status == 'Задание выполнено':
-            return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+            application_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+        return {
+            'application_id': application_id,
+            'application_status': application_status,
+            'solution_link': solution_link
+        }
 
+    return None
+
+
+#   функция для получения загруженных данных
+def get_attachments(token, task_id):
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/attachments/{node_id_default}/{task_id}"
+    response = requests.get(url, headers=headers)
+    response_data = response.json().get('data', [])
+    if response_data:
+        return {
+            "id": response_data[0].get('id'),
+            "name": response_data[0].get('name'),
+            "url": response_data[0].get('url'),
+            "content_type": response_data[0].get('content_type'),
+        }
     return None
 
 
@@ -443,7 +467,7 @@ def get_tasks(
                         'profession': cf_profession,
                         'projects': cf_projects,
                         'konkurs_category': cf_konkurs_category,
-                        'application_status': task,
+                        'application_status': task.get('application_status'),
 
                     }
                 )
@@ -537,7 +561,7 @@ def get_history(
                 process_id=process_participation_contest_id,
                 contest_id=contest.get('id'),
                 user_id=user_id,
-                status_condition=f"AND status.id = '{status_id_task_completed}'",
+                status_condition=f"AND status.name = 'Задание выполнено'", #f"AND status.id = '{status_id_task_completed}'",
                 headers=headers
             )
 
@@ -545,6 +569,8 @@ def get_history(
 
                 custom_fields = contest.get('custom_fields', {})
                 cf_deadline = custom_fields.get('cf_deadline')
+                application_id = task.get('application_id')
+                attachments = get_attachments(token, application_id)
 
                 result_data.append(  # contest)
                     {
@@ -552,6 +578,8 @@ def get_history(
                         'title': contest.get('title', None),
                         'created_at': datetime_convert(contest.get('created_at', None), format_date='%d %B %Y'),
                         'deadline': datetime_convert(cf_deadline, format_date='%d %B %Y'),
+                        'solution_link': task.get('solution_link'),
+                        'attachments': attachments,
                     }
                 )
             else:
