@@ -347,10 +347,10 @@ def check_task(
         status = result[0].get('status').get('name', None)
         application_id = result[0].get('id', None)
         solution_link = result[0].get('custom_fields').get('cf_konkurs_link', None)
-        if status in ('Новая', 'Одобрено'):
-            application_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
-        elif status == 'Задание выполнено':
+        if status == 'Задание выполнено':
             application_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+        else:
+            application_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
         return {
             'application_id': application_id,
             'application_status': application_status,
