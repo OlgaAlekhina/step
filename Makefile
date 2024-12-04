@@ -2,9 +2,13 @@
 venv:
 	python3 -m venv venv && source venv/bin/activate
 
+# .PHONY: install
+# install: venv
+# 	venv/bin/pip install -r requirements.txt
+
 .PHONY: install
-install: venv
-	venv/bin/pip install -r requirements.txt
+install:
+	pip install -r requirements.txt
 
 .PHONY: django
 django:
