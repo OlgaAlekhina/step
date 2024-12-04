@@ -2,9 +2,6 @@ import time
 from datetime import datetime
 from typing import Union, Tuple, List, Dict
 
-import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
-
 import requests
 from django.conf import settings
 from requests.exceptions import RequestException, HTTPError

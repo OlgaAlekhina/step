@@ -3,8 +3,21 @@ variables:
   IMAGE_TAG: app-1.0
 
 stages:
+  - run_tests
   - build
   - deploy
+
+run_tests:
+  stage: run_tests
+  tags:
+    - docker
+  image: python:3.9-slim-buster
+  before_script:
+    - apt-get update && apt-get install make
+  script:
+    - make run_tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
 
 build_image:
   stage: build
