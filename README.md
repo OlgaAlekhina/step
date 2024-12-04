@@ -21,16 +21,31 @@ ___
 
 </summary>
 
+### Backend
+***Django Rest Framework***
+
+### Tools
+***PyCharm, Git, GitLab***
+
+### Containerization
+***Docker, Docker Compose, Nginx***
+
+### QA
+***Postman, Pytest***
+### Backend
 ![Django Rest Framework](https://img.shields.io/badge/-Django_Rest_Framework-090909?style=for-the-badge&logo=django&logoColor=17952c)
 
+### Tools
 ![PyCharm](https://img.shields.io/badge/-pycharm-090909?style=for-the-badge&logo=pycharm&logoColor=e9fd01)
 ![Git](https://img.shields.io/badge/-GIT-090909?style=for-the-badge&logo=git&logoColor=ff5169)
 ![GitLab](https://img.shields.io/badge/-GITLAB-090909?style=for-the-badge&logo=gitlab&logoColor=FFA500)
 
+### Containerization
 ![Docker](https://img.shields.io/badge/-Docker-090909?style=for-the-badge&logo=docker&logoColor=097CDB)
 ![Docker Compose](https://img.shields.io/badge/-Docker_compose-090909?style=for-the-badge&logo=docker&logoColor=097CDB)
 ![Nginx](https://img.shields.io/badge/-Nginx-090909?style=for-the-badge&logo=Nginx&logoColor=00FF00)
 
+### QA
 ![Postman](https://img.shields.io/badge/-Postman-090909?style=for-the-badge&logo=postman&logoColor=#FF7F00)
 ![Pytest](https://img.shields.io/badge/-Pytest-090909?style=for-the-badge&logo=pytest&logoColor=#FF7F00)
 
