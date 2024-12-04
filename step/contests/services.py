@@ -33,6 +33,14 @@ status_id_done = settings.STATUS_ID_DONE
 
 
 def get_token():
+    """
+    Получить или обновить токен доступа для аутентификации пользователя.
+
+    Эта функция использует кэш для хранения токена доступа и времени его последнего обновления.
+    Если токен отсутствует или срок его действия истек (более 1 часа с последнего обновления),
+    функция выполняет запрос на получение нового токена. В противном случае возвращает
+    текущий токен из кэша.
+    """
     current_time = time.time()
 
     if (token_cache['access_token'] is None or
@@ -54,8 +62,12 @@ def get_token():
         return token_cache['access_token']
 
 
-#   проверяет статус заявки пользователя на участие в конкурсе
-def get_application_status(token, contest_id, user_id):
+def get_application_status(token: str, contest_id: str, user_id: str) -> dict:
+    """
+    Проверка статуса заявки пользователя на участие в конкурсе.
+    Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
+    Она проверяет наличие заявки и ее статус, возвращая соответствующий код и сообщение.
+    """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/rql/{node_id_default}"
@@ -71,11 +83,21 @@ def get_application_status(token, contest_id, user_id):
             elif status == 'Задание выполнено':
                 return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
         return {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
-    except:
-        return {'code': 'NOT_DEFINED', 'message': 'Не определен'}
+
+    except requests.exceptions.HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
+
+    except requests.exceptions.RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
+
+    except ValueError as err:
+        return {'code': 'VALUE_ERROR', 'message': f'Ошибка обработки данных: {str(err)}'}
+
+    except Exception as err:
+        return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}
 
 
-def datetime_convert(date, format_date='%d.%m.%Y'):
+def datetime_convert(date, format_date='%d.%m.%Y') -> str | None:
     """Преобразование даты в заданный формат."""
 
     if date is None or not date:
@@ -96,14 +118,14 @@ def get_condition(parameters_ids: Union[Tuple[str, ...], List[str], str, None], 
     return parameter_condition
 
 
-def get_contest(token, contest_id):
+def get_contest(token: str, contest_id: str) -> Tuple[Dict, int] | list:
     """Получение данных одного конкурса по его id."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
     try:
         response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+        response.raise_for_status()
         response_data = response.json().get('data', [])
         if not response_data:
             return []
@@ -120,7 +142,7 @@ def get_contest(token, contest_id):
             "data": result_data,
             "info": {
                 "api_version": "0.0.1",
-                "compression_algorithm": "lossy"
+                # "compression_algorithm": "lossy"
             }
         }
 
@@ -145,7 +167,7 @@ def get_contest(token, contest_id):
         return result_data, response.status_code
 
 
-def patch_docontest(token, contest_id, user_id):
+def patch_docontest(token: str, contest_id: str, user_id: str) -> Tuple[Dict, int] | None:
     """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
@@ -170,7 +192,7 @@ def patch_docontest(token, contest_id, user_id):
                     },
                     "info": {
                         "api_version": "0.0.1",
-                        "compression_algorithm": "lossy"
+                        # "compression_algorithm": "lossy"
                     }
                 }
                 return result_data, response.status_code
@@ -261,10 +283,9 @@ def get_contests(
         }
 
         response = requests.post(url, json=completed_contests, headers=headers)
-        response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
+        response.raise_for_status()
 
         response_data = response.json().get('data', [])
-        # result_data = response_data
         result_data = []
         for contest in response_data:
             status_name = contest['status'].get('name', None) if contest.get('status', None) is not None else None
@@ -282,10 +303,10 @@ def get_contests(
                 {
                     'id': contest.get('id', None),
                     'title': contest.get('title', None),
-                    'description': contest.get('description', None),  # под вопросом
-                    'status_id': status_id,  # под вопросом
+                    'description': contest.get('description', None),
+                    'status_id': status_id,
                     'status_name': status_name,
-                    'deadline': datetime_convert(cf_deadline),  # под вопросом
+                    'deadline': datetime_convert(cf_deadline),
                     'award': cf_award,
                     'brief': cf_brief,
                     'profession': cf_profession,
@@ -361,7 +382,7 @@ def check_task(
 
 
 #   функция для получения загруженных данных
-def get_attachments(token, task_id):
+def get_attachments(token: str, task_id: str) -> dict | None:
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/attachments/{node_id_default}/{task_id}"
@@ -561,7 +582,8 @@ def get_history(
                 process_id=process_participation_contest_id,
                 contest_id=contest.get('id'),
                 user_id=user_id,
-                status_condition=f"AND status.name = 'Задание выполнено'", #f"AND status.id = '{status_id_task_completed}'",
+                status_condition=f"AND status.name = 'Задание выполнено'",
+                # f"AND status.id = '{status_id_task_completed}'",
                 headers=headers
             )
 
