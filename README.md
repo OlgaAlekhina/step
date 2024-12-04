@@ -31,22 +31,35 @@ ___
 
 ### QA
 ***Postman, Pytest***
-### Backend
-![Django Rest Framework](https://img.shields.io/badge/-Django_Rest_Framework-090909?style=for-the-badge&logo=django&logoColor=17952c)
 
-### Tools
-![PyCharm](https://img.shields.io/badge/-pycharm-090909?style=for-the-badge&logo=pycharm&logoColor=e9fd01)
-![Git](https://img.shields.io/badge/-GIT-090909?style=for-the-badge&logo=git&logoColor=ff5169)
-![GitLab](https://img.shields.io/badge/-GITLAB-090909?style=for-the-badge&logo=gitlab&logoColor=FFA500)
+[//]: # (### Backend)
 
-### Containerization
-![Docker](https://img.shields.io/badge/-Docker-090909?style=for-the-badge&logo=docker&logoColor=097CDB)
-![Docker Compose](https://img.shields.io/badge/-Docker_compose-090909?style=for-the-badge&logo=docker&logoColor=097CDB)
-![Nginx](https://img.shields.io/badge/-Nginx-090909?style=for-the-badge&logo=Nginx&logoColor=00FF00)
+[//]: # (![Django Rest Framework]&#40;https://img.shields.io/badge/-Django_Rest_Framework-090909?style=for-the-badge&logo=django&logoColor=17952c&#41;)
 
-### QA
-![Postman](https://img.shields.io/badge/-Postman-090909?style=for-the-badge&logo=postman&logoColor=#FF7F00)
-![Pytest](https://img.shields.io/badge/-Pytest-090909?style=for-the-badge&logo=pytest&logoColor=#FF7F00)
+[//]: # ()
+[//]: # (### Tools)
+
+[//]: # (![PyCharm]&#40;https://img.shields.io/badge/-pycharm-090909?style=for-the-badge&logo=pycharm&logoColor=e9fd01&#41;)
+
+[//]: # (![Git]&#40;https://img.shields.io/badge/-GIT-090909?style=for-the-badge&logo=git&logoColor=ff5169&#41;)
+
+[//]: # (![GitLab]&#40;https://img.shields.io/badge/-GITLAB-090909?style=for-the-badge&logo=gitlab&logoColor=FFA500&#41;)
+
+[//]: # ()
+[//]: # (### Containerization)
+
+[//]: # (![Docker]&#40;https://img.shields.io/badge/-Docker-090909?style=for-the-badge&logo=docker&logoColor=097CDB&#41;)
+
+[//]: # (![Docker Compose]&#40;https://img.shields.io/badge/-Docker_compose-090909?style=for-the-badge&logo=docker&logoColor=097CDB&#41;)
+
+[//]: # (![Nginx]&#40;https://img.shields.io/badge/-Nginx-090909?style=for-the-badge&logo=Nginx&logoColor=00FF00&#41;)
+
+[//]: # ()
+[//]: # (### QA)
+
+[//]: # (![Postman]&#40;https://img.shields.io/badge/-Postman-090909?style=for-the-badge&logo=postman&logoColor=#FF7F00&#41;)
+
+[//]: # (![Pytest]&#40;https://img.shields.io/badge/-Pytest-090909?style=for-the-badge&logo=pytest&logoColor=#FF7F00&#41;)
 
 </details>
 
