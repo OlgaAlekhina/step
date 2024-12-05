@@ -10,5 +10,5 @@ urlpatterns = [
     path('contests/archive/', ArchiveContestsView.as_view(), name='contest_archive'),
     path('contests/user/my/tasks/', UserTasksView.as_view(), name='my_task'),
     path('contests/user/my/history/', UserHistoryView.as_view(), name='my_history'),
-    path('contests/<uuid:contest_id>/quit_contest/', QuitContestView.as_view(), name='quit_contest'),
+    path('contests/user/my/task/<uuid:task_id>/', QuitContestView.as_view(), name='quit_contest'),
 ]

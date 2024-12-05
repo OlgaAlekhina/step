@@ -9,7 +9,7 @@ from rest_framework import status, permissions
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer)
 
-from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_docontest,
+from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_task,
                        get_history)
 
 # ID Конкурсов
@@ -165,10 +165,10 @@ class QuitContestView(BaseContestView):
         },
         tags=['Contests']
     )
-    def delete(self, request, contest_id):
+    def delete(self, request, task_id):
         access_token = get_token()
         user_id = request.auth.get('user_id')
-        response_data = patch_docontest(access_token, contest_id, user_id)
+        response_data = patch_task(access_token, task_id, user_id)
         if not response_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)

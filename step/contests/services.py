@@ -171,53 +171,28 @@ def get_contest(token: str, contest_id: str) -> Tuple[Dict, int] | list:
         return result_data, response.status_code
 
 
-def patch_docontest(token: str, contest_id: str, user_id: str) -> Tuple[Dict, int] | None:
+def patch_task(token: str, task_id: str, user_id: str) -> Tuple[Dict, int] | None:
     """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/{node_id_default}/{task_id}"
+    data = {"status_id": status_id_rejection}
     try:
-        response = requests.post(url, headers=headers, json={
-            "rql": f"process.id = '{process_docontests_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
-            "fields": []})
-        response.raise_for_status()
+        response = requests.patch(url, headers=headers, json=data)
         response_data = response.json().get('data', [])
+        response.raise_for_status()
         if response_data:
-            docontest_id = response_data[0].get('id', None)
-            url = f"{base_url}/api/tasks/{node_id_default}/{docontest_id}"
-            data = {"status_id": status_id_rejection}
-            try:
-                response = requests.patch(url, headers=headers, json=data)
-                response.raise_for_status()
-                result_data = {
-                    "detail": {
-                        "code": "OK",
-                        "message": "Статус заявки изменен на 'Отказ'"
-                    },
-                    "info": {
-                        "api_version": "0.0.1",
-                        # "compression_algorithm": "lossy"
-                    }
+            result_data = {
+                "detail": {
+                    "code": "OK",
+                    "message": "Статус заявки изменен на 'Отказ'"
+                },
+                "info": {
+                    "api_version": "0.0.1",
+                    # "compression_algorithm": "lossy"
                 }
-                return result_data, response.status_code
-            except HTTPError as http_err:
-                result_data = {
-                    "detail": {
-                        "code": f"HTTP_ERROR - {response.status_code}",
-                        "message": str(http_err)
-                    }
-                }
-                return result_data, response.status_code
-
-            except RequestException as err:
-                result_data = {
-                    "detail": {
-                        "code": f"REQUEST_ERROR - {response.status_code}",
-                        "message": str(err)
-                    }
-                }
-                return result_data, response.status_code
-
+            }
+            return result_data, response.status_code
         return None
 
     except HTTPError as http_err:
