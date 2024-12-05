@@ -175,16 +175,9 @@ CORS_ALLOW_CREDENTIALS = True
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
-            'contests.authentication.JWTAuthentication',
-        ]
+        'contests.authentication.JWTAuthentication',
+    ]
 }
-
-# SPECTACULAR_SETTINGS = {
-#     'TITLE': 'API Contests',
-#     'VERSION': '0.0.1',
-#     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
-#     'SERVE_INCLUDE_SCHEMA': True,
-# }
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'API Contests',

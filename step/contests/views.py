@@ -29,40 +29,47 @@ status_id_no_winner = settings.STATUS_ID_NO_WINNER
 user_id_test = 'seghstr3345ega'
 
 
-class ArchiveContestsView(APIView):
+class BaseContestView(APIView):
+    """Родительский класс для исключения дублирования кода в части документация swagger."""
+
+    COMMON_RESPONSES = {
+        400: OpenApiResponse(
+            description="Ошибка клиента при запросе данных",
+            response=ErrorResponseSerializer()
+        ),
+        401: OpenApiResponse(
+            description="Необходима аутентификация",
+            response=ErrorResponseSerializer()
+        ),
+        403: OpenApiResponse(
+            description="Доступ запрещён",
+            response=ErrorResponseSerializer()
+        ),
+        404: OpenApiResponse(
+            description="Не найдено",
+            response=ErrorResponseSerializer()
+        ),
+        500: OpenApiResponse(
+            description="Ошибка сервера при обработке запроса",
+            response=ErrorResponseSerializer()
+        ),
+    }
+
+
+class ArchiveContestsView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка архивных конкурсов",
         description="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=GetArchiveSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
-
-        tags=['Contests']
+        tags=['Contests'],
     )
     def get(self, request):
         access_token = get_token()
@@ -76,44 +83,23 @@ class ArchiveContestsView(APIView):
             projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов."
         )
-        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
 
 
-class ActiveContestsView(APIView):
+class ActiveContestsView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка активных конкурсов",
         description="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=GetArchiveSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
-
-        tags=['Contests']
+        tags=['Contests'],
     )
     def get(self, request):
         access_token = get_token()
@@ -127,41 +113,21 @@ class ActiveContestsView(APIView):
             projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы."
         )
-        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
 
 
-class ContestDetailsView(APIView):
+class ContestDetailsView(BaseContestView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     @extend_schema(
-        summary="Retrieve a details of contest",
+        summary="Получение конкретного конкурса",
         description="Получение данных одного конкурса по его id",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=ContestDetailsResponseSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
         tags=['Contests']
     )
@@ -183,37 +149,18 @@ class ContestDetailsView(APIView):
         return Response(response_data, status=contest_data[1])
 
 
-class QuitContestView(APIView):
+class QuitContestView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        summary="Delete user's contest application",
+        summary="Отказ от участия в конкурсе",
         description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=QuitContestSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
         tags=['Contests']
     )
@@ -227,40 +174,20 @@ class QuitContestView(APIView):
         return Response(response_data[0], status=response_data[1])
 
 
-class UserTasksView(APIView):
+class UserTasksView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка заданий пользователя",
         description="Получение списка всех заданий пользователя. Мои задания.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=GetArchiveSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
-
         tags=['Contests']
     )
     def get(self, request):
@@ -284,44 +211,23 @@ class UserTasksView(APIView):
             # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, Подведение итогов, Завершен. Для раздела мои задания."
         )
-        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])
 
 
-class UserHistoryView(APIView):
+class UserHistoryView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка завершенных конкурсов пользователя",
         description="Получение списка всех завершенных конкурсов, где пользователя участвовал. История участия.",
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
                 response=GetArchiveSerializer()
             ),
-            400: OpenApiResponse(
-                description="Ошибка клиента при запросе данных",
-                response=ErrorResponseSerializer()
-            ),
-            401: OpenApiResponse(
-                description="Необходима аутентификация",
-                response=ErrorResponseSerializer()
-            ),
-            403: OpenApiResponse(
-                description="Доступ запрещён",
-                response=ErrorResponseSerializer()
-            ),
-            404: OpenApiResponse(
-                description="Не найдено",
-                response=ErrorResponseSerializer()
-            ),
-            500: OpenApiResponse(
-                description="Ошибка сервера при обработке запроса",
-                response=ErrorResponseSerializer()
-            ),
+            **BaseContestView.COMMON_RESPONSES
         },
-
         tags=['Contests']
     )
     def get(self, request):
@@ -341,5 +247,4 @@ class UserHistoryView(APIView):
             # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
         )
-        # result_data = get_archive_contests(access_token)
         return Response(result_data[0], status=result_data[1])

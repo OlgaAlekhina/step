@@ -32,11 +32,11 @@ class ContestSerializer(serializers.Serializer):
     title = serializers.CharField()
     description = serializers.CharField()
     status = serializers.CharField()
-    cf_deadline = serializers.DateField(format="%d.%m.%Y")
-    cf_award = serializers.CharField()
-    cf_brief = serializers.CharField()
-    cf_title = serializers.CharField()
-    cf_konkurs_category = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    brief = serializers.CharField()
+    title = serializers.CharField()
+    konkurs_category = serializers.CharField()
 
 
 class DetailSerializer(serializers.Serializer):
@@ -61,6 +61,7 @@ class QuitContestSerializer(serializers.Serializer):
     """Сериализатор для успешного изменения статуса заявки на участие в конкурсе на 'Отказ' """
     detail = DetailSerializer()
     info = InfoSerializer()
+
 
 @dataclass
 class Contest:
