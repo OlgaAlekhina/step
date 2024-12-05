@@ -74,12 +74,19 @@ def get_application_status(token: str, contest_id: str, user_id: str) -> dict:
             "fields": []})
         response_data = response.json().get('data', [])
         if response_data:
+            user_task = response_data[0].get('id', None)
             status = response_data[0].get('status').get('name', None)
-            if status in ('Новая', 'Одобрено'):
-                return {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
-            elif status == 'Задание выполнено':
-                return {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
-        return {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
+            if status == 'Задание выполнено':
+                task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+            else:
+                task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+        else:
+            user_task = None
+            task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
+        return {
+            'user_task': user_task,
+            'task_status': task_status
+        }
 
     except requests.exceptions.HTTPError as err:
         return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}

@@ -133,19 +133,20 @@ class ContestDetailsView(BaseContestView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
-        application_status = {'code': 'NOT_DEFINED', 'message': 'Не определен'}
+        user_data = {'user_task_id': None, 'user_task_status': {'code': 'NOT_DEFINED', 'message': 'Не определен'}}
         # если запрос успешно прошел аутентификацию, получаем id пользователя
         if request.auth:
             user_id = request.auth.get('user_id')
             # проверяем, отправил пользователь решение или нет
-            application_status = get_application_status(access_token, contest_id, user_id)
+            result = get_application_status(access_token, contest_id, user_id)
+            user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
         contest_data = get_contest(access_token, contest_id)
         if not contest_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
         response_data = contest_data[0]
         if contest_data[1] == 200:
-            response_data['data'].update({'application_status': application_status})
+            response_data['data'].update(user_data)
         return Response(response_data, status=contest_data[1])
 
 
