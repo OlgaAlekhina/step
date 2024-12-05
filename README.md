@@ -183,7 +183,7 @@ ___
 
 ***API для вкладок/разделов личного кабинета Кловери Шаг (Конкурсы)***
 <details>
-<summary><code>GET/api/contests/{contest_id}/</code></summary>
+<summary><code>GET/contests/{contest_id}/</code></summary>
 
 *Получение данных конкретного конкурса по его id*
 
@@ -219,7 +219,7 @@ ___
 </details>
 
 <details>
-<summary><code>GET/api/contests/active/</code></summary>
+<summary><code>GET/contests/active/</code></summary>
 
 *Получение списка всех конкурсов со статусом Прием работ. Вкладка/раздел Активные конкурсы.*
 
@@ -232,14 +232,13 @@ ___
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "title": "string",
       "description": "string",
       "status": "string",
-      "cf_deadline": "2024-12-04",
-      "cf_award": "string",
-      "cf_brief": "string",
-      "cf_title": "string",
-      "cf_konkurs_category": "string"
+      "deadline": "2024-12-05",
+      "award": "string",
+      "brief": "string",
+      "title": "string",
+      "konkurs_category": "string"
     }
   ],
   "info": {
@@ -253,7 +252,7 @@ ___
 
 
 <details>
-<summary><code>GET/api/contests/archive/</code></summary>
+<summary><code>GET/contests/archive/</code></summary>
 
 *Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Вкладка/раздел Архив конкурсов.*
 
@@ -266,14 +265,13 @@ ___
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "title": "string",
       "description": "string",
       "status": "string",
-      "cf_deadline": "2024-12-04",
-      "cf_award": "string",
-      "cf_brief": "string",
-      "cf_title": "string",
-      "cf_konkurs_category": "string"
+      "deadline": "2024-12-05",
+      "award": "string",
+      "brief": "string",
+      "title": "string",
+      "konkurs_category": "string"
     }
   ],
   "info": {
@@ -287,7 +285,7 @@ ___
 
 
 <details>
-<summary><code>GET/api/contests/user_history/</code></summary>
+<summary><code>GET/contests/user/my/history/</code></summary>
 
 *Получение списка всех завершенных конкурсов, где пользователя участвовал. Вкладка/раздел История участия.*
 
@@ -300,14 +298,13 @@ ___
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "title": "string",
       "description": "string",
       "status": "string",
-      "cf_deadline": "2024-12-04",
-      "cf_award": "string",
-      "cf_brief": "string",
-      "cf_title": "string",
-      "cf_konkurs_category": "string"
+      "deadline": "2024-12-05",
+      "award": "string",
+      "brief": "string",
+      "title": "string",
+      "konkurs_category": "string"
     }
   ],
   "info": {
@@ -321,7 +318,7 @@ ___
 
 
 <details>
-<summary><code>GET/api/contests/user_tasks/</code></summary>
+<summary><code>GET/contests/user/my/tasks/</code></summary>
 
 *Получение списка всех заданий пользователя. Вкладка/раздел Мои задания.*
 
@@ -334,14 +331,13 @@ ___
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "title": "string",
       "description": "string",
       "status": "string",
-      "cf_deadline": "2024-12-04",
-      "cf_award": "string",
-      "cf_brief": "string",
-      "cf_title": "string",
-      "cf_konkurs_category": "string"
+      "deadline": "2024-12-05",
+      "award": "string",
+      "brief": "string",
+      "title": "string",
+      "konkurs_category": "string"
     }
   ],
   "info": {

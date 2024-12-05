@@ -60,7 +60,7 @@ class ArchiveContestsView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка архивных конкурсов",
         description="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов.",
         responses={
             200: OpenApiResponse(
@@ -90,7 +90,7 @@ class ActiveContestsView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка активных конкурсов",
         description="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы.",
         responses={
             200: OpenApiResponse(
@@ -120,7 +120,7 @@ class ContestDetailsView(BaseContestView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     @extend_schema(
-        summary="Retrieve a details of contest",
+        summary="Получение конкретного конкурса",
         description="Получение данных одного конкурса по его id",
         responses={
             200: OpenApiResponse(
@@ -153,7 +153,7 @@ class QuitContestView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
-        summary="Delete user's contest application",
+        summary="Отказ от участия в конкурсе",
         description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
         responses={
             200: OpenApiResponse(
@@ -179,7 +179,7 @@ class UserTasksView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка заданий пользователя",
         description="Получение списка всех заданий пользователя. Мои задания.",
         responses={
             200: OpenApiResponse(
@@ -219,7 +219,7 @@ class UserHistoryView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
-        summary="Retrieve a list of contests",
+        summary="Получение списка завершенных конкурсов пользователя",
         description="Получение списка всех завершенных конкурсов, где пользователя участвовал. История участия.",
         responses={
             200: OpenApiResponse(
