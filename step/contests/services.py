@@ -21,6 +21,7 @@ process_docontests_id = settings.PROCESS_DOCONTESTS_ID
 
 status_id_rejection = settings.STATUS_ID_REJECTION
 status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
+status_id_task_new = 'e9672f87-586d-41b1-b9b5-79acfaf6f9c2'
 
 jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
 jwt_algorithm = settings.JWT_ALGORITHM
@@ -78,8 +79,11 @@ def get_application_status(token: str, contest_id: str, user_id: str) -> dict:
             status = response_data[0].get('status').get('name', None)
             if status == 'Задание выполнено':
                 task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
-            else:
+            elif status in ('Новая', 'Одобрена'):
                 task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+            else:
+                user_task = None
+                task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
         else:
             user_task = None
             task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
@@ -187,8 +191,8 @@ def patch_task(token: str, task_id: str, user_id: str) -> Tuple[Dict, int] | Non
             data = {"status_id": status_id_rejection}
             try:
                 response = requests.patch(url, headers=headers, json=data)
-                response_data = response.json().get('data', [])
                 response.raise_for_status()
+                response_data = response.json().get('data', [])
                 if response_data:
                     result_data = {
                         "detail": {
@@ -221,6 +225,125 @@ def patch_task(token: str, task_id: str, user_id: str) -> Tuple[Dict, int] | Non
                 }
                 return result_data, response.status_code
         return None
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+
+
+# проверяет, существует ли конкурс с таким id
+def contest_exists(token, contest_id):
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
+    response = requests.get(url, headers=headers)
+    response_data = response.json().get('data', [])
+    if response_data and response_data.get('process').get('name') == 'Конкурс':
+        return True
+    return False
+
+
+def create_task(token, contest_id, user_id):
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/{node_id_default}/{process_docontests_id}"
+    task = {
+            "title": "",
+            "description": "",
+            "author": None,
+            "assignee": None,
+            "status_id": status_id_task_new,
+            "custom_fields": {
+                    # "cf_00001": "",
+                    # "cf_test_select": "",
+                    # "cf_cf_address": {
+                    #         "full_address": "",
+                    #         "city": "",
+                    #         "postcode": "",
+                    #         "street": "",
+                    #         "house": "",
+                    #         "appartments": "",
+                    #         "entrance": "",
+                    #         "floor": "",
+                    #         "lat": "",
+                    #         "lon": ""
+                    #     },
+                    #         "cf_timeline": "",
+                    #         "cf_person": {
+                    #             "last_name": "",
+                    #             "first_name": "",
+                    #             "middle_name": ""
+                    #         },
+                    #         "cf_contact": {
+                    #             "phone": "",
+                    #             "email": ""
+                    #         },
+                    #         "cf_issue_type": "",
+                    #         "cf_address": {
+                    #             "full_address": "",
+                    #             "appartments": "",
+                    #             "entrance": "",
+                    #             "floor": "",
+                    #             "lon": "",
+                    #             "lat": ""
+                    #         },
+                    #         "cf_priority": "",
+                    #         "cf_deadline": "",
+                    #         "cf_letter_numbers": {
+                    #             "incoming": "",
+                    #             "outgoing": ""
+                    #         },
+                    #         "cf_letter_dates": {
+                    #             "incoming": "",
+                    #             "outgoing": ""
+                    #         },
+                    #         "cf_sender": "",
+                    #         "cf_recipient": "",
+                    #         "cf_folder": "",
+                            "cf_konkurs_link": "",
+                            "cf_award": "",
+                            "cf_brief": "",
+                            "cf_startdate": "",
+                            "cf_konkurs_category": "",
+                            "cf_konkurs_id": contest_id,
+                            "cf_userid": user_id
+                        }
+    }
+    try:
+        response = requests.post(url, json=task, headers=headers)
+        print('response_data: ', response.json())
+        response_data = response.json().get('data')
+        result_data = {
+            "task_id": response_data.get('id', None),
+            "status": "Новая",
+            "contest_id": contest_id,
+            "user_id": user_id
+        }
+        return {
+            "detail": {
+                "code": "OK",
+                "message": "Задача создана"
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                # "compression_algorithm": "lossy"
+            }
+        }
+
     except HTTPError as http_err:
         result_data = {
             "detail": {

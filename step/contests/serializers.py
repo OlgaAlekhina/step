@@ -13,21 +13,9 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
     return result
 
 
-class DoContestSerializer(serializers.Serializer):
-    # user_id = serializers.CharField(max_length=36)
-    contest_id = serializers.CharField(max_length=36)
-
-    # def validate_user_id(self, value):
-    #     try:
-    #         return str(uuid.UUID(value))
-    #     except ValueError:
-    #         raise serializers.ValidationError("Недействительный UUID для user_id.")
-
-    def validate_contest_id(self, value):
-        try:
-            return str(uuid.UUID(value))
-        except ValueError:
-            raise serializers.ValidationError("Недействительный UUID для contest_id.")
+class CreateTaskSerializer(serializers.Serializer):
+    """Сериализатор для создания задачи на участие в конкурсе """
+    contest_id = serializers.UUIDField()
 
 
 class QueryParamsSerializer(serializers.Serializer):
@@ -78,6 +66,21 @@ class GetArchiveSerializer(serializers.Serializer):
 class QuitContestSerializer(serializers.Serializer):
     """Сериализатор для успешного изменения статуса заявки на участие в конкурсе на 'Отказ' """
     detail = DetailSerializer()
+    info = InfoSerializer()
+
+
+class CreatedTaskSerializer(serializers.Serializer):
+    """Сериализатор для получения данных созданной задачи для участия в конкурсе """
+    task_id = serializers.UUIDField()
+    status = serializers.CharField()
+    contest_id = serializers.UUIDField()
+    user_id = serializers.UUIDField()
+
+
+class TaskResponseSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает созданную задачу для участия в конкурсе """
+    detail = DetailSerializer()
+    data = CreatedTaskSerializer()
     info = InfoSerializer()
 
 

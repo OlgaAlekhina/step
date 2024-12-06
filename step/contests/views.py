@@ -7,10 +7,10 @@ from rest_framework.views import APIView
 from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer, DoContestSerializer)
+                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_task,
-                       get_history)
+                       get_history, contest_exists, create_task)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -176,7 +176,52 @@ class QuitContestView(BaseContestView):
 
 
 class UserTaskView(BaseContestView):
-    pass
+    permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(
+        summary="Создать задачу для участия в конкурсе",
+        description="Создание задачи для участия в конкурсе",
+        request=CreateTaskSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="Successful Response",
+                response=TaskResponseSerializer()
+            ),
+            409: OpenApiResponse(
+                description="Объект уже существует",
+                response=ErrorResponseSerializer()
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Contests']
+    )
+    def post(self, request):
+        user_id = request.auth.get('user_id')
+        serializer = CreateTaskSerializer(data=request.data)
+        if serializer.is_valid():
+            contest_id = serializer.validated_data['contest_id']
+            access_token = get_token()
+            if contest_exists(access_token, contest_id):
+                task = get_application_status(access_token, contest_id, user_id)
+                if task and task.get('user_task'):
+                    response = {
+                        "detail": {
+                            "code": "ENTITY_EXISTS",
+                            "message": "Задача для участия в конкурсе уже существует."
+                        },
+                        "info": {
+                            "api_version": "0.0.1",
+                            # "compression_algorithm": "lossy"
+                        }
+                    }
+                    return Response(response, status=status.HTTP_409_CONFLICT)
+
+                else:
+                    new_contest = create_task(access_token, contest_id, user_id)
+                    return Response(new_contest, status=status.HTTP_201_CREATED)
+            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
+                            status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors)
+
 
 class UserTasksView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
