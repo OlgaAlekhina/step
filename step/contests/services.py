@@ -318,7 +318,7 @@ def create_task(token, contest_id, user_id):
                             "cf_brief": "",
                             "cf_startdate": "",
                             "cf_konkurs_category": "",
-                            "cf_konkurs_id": contest_id,
+                            "cf_konkurs_id": str(contest_id),
                             "cf_userid": user_id
                         }
     }
