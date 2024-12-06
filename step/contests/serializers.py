@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from dataclasses import dataclass
 from datetime import datetime
+import uuid
 
 
 def datetime_convert(date, format_date='%d.%m.%Y'):
@@ -10,6 +11,23 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
     else:
         result = date
     return result
+
+
+class DoContestSerializer(serializers.Serializer):
+    # user_id = serializers.CharField(max_length=36)
+    contest_id = serializers.CharField(max_length=36)
+
+    # def validate_user_id(self, value):
+    #     try:
+    #         return str(uuid.UUID(value))
+    #     except ValueError:
+    #         raise serializers.ValidationError("Недействительный UUID для user_id.")
+
+    def validate_contest_id(self, value):
+        try:
+            return str(uuid.UUID(value))
+        except ValueError:
+            raise serializers.ValidationError("Недействительный UUID для contest_id.")
 
 
 class QueryParamsSerializer(serializers.Serializer):

@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer)
+                          QuitContestSerializer, DoContestSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_application_status, get_tasks, patch_task,
                        get_history)
@@ -174,6 +174,9 @@ class QuitContestView(BaseContestView):
                             status=status.HTTP_404_NOT_FOUND)
         return Response(response_data[0], status=response_data[1])
 
+
+class UserTaskView(BaseContestView):
+    pass
 
 class UserTasksView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
