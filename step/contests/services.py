@@ -21,7 +21,7 @@ process_docontests_id = settings.PROCESS_DOCONTESTS_ID
 
 status_id_rejection = settings.STATUS_ID_REJECTION
 status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
-status_id_task_new = 'e9672f87-586d-41b1-b9b5-79acfaf6f9c2'
+status_id_task_new = settings.STATUS_ID_TASK_NEW
 
 jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
 jwt_algorithm = settings.JWT_ALGORITHM
@@ -60,7 +60,7 @@ def get_token():
         return token_cache['access_token']
 
 
-def get_application_status(token: str, contest_id: str, user_id: str) -> dict:
+def get_user_task(token: str, contest_id: str, user_id: str) -> dict:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
     Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
@@ -75,12 +75,16 @@ def get_application_status(token: str, contest_id: str, user_id: str) -> dict:
             "fields": []})
         response_data = response.json().get('data', [])
         if response_data:
-            user_task = response_data[0].get('id', None)
-            status = response_data[0].get('status').get('name', None)
-            if status == 'Задание выполнено':
-                task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
-            elif status in ('Новая', 'Одобрена'):
-                task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+            for response in response_data:
+                status = response.get('status').get('name', None)
+                if status == 'Задание выполнено':
+                    task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
+                    user_task = response.get('id', None)
+                    break
+                elif status in ('Новая', 'Одобрена'):
+                    task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+                    user_task = response.get('id', None)
+                    break
             else:
                 user_task = None
                 task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Нет заявки на участие'}
@@ -175,7 +179,7 @@ def get_contest(token: str, contest_id: str) -> Tuple[Dict, int] | list:
         return result_data, response.status_code
 
 
-def patch_task(token: str, task_id: str, user_id: str) -> Tuple[Dict, int] | None:
+def patch_task(token: str, task_id: str) -> Tuple[Dict, int] | None:
     """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
     access_token = token
     # проверяем, что есть такая заявка на участие в конкурсе
@@ -244,8 +248,8 @@ def patch_task(token: str, task_id: str, user_id: str) -> Tuple[Dict, int] | Non
         return result_data, response.status_code
 
 
-# проверяет, существует ли конкурс с таким id
-def contest_exists(token, contest_id):
+def contest_exists(token: str, contest_id: str) -> bool:
+    """Проверяет, существует ли конкурс с данным contest_id"""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
@@ -267,52 +271,6 @@ def create_task(token, contest_id, user_id):
             "assignee": None,
             "status_id": status_id_task_new,
             "custom_fields": {
-                    # "cf_00001": "",
-                    # "cf_test_select": "",
-                    # "cf_cf_address": {
-                    #         "full_address": "",
-                    #         "city": "",
-                    #         "postcode": "",
-                    #         "street": "",
-                    #         "house": "",
-                    #         "appartments": "",
-                    #         "entrance": "",
-                    #         "floor": "",
-                    #         "lat": "",
-                    #         "lon": ""
-                    #     },
-                    #         "cf_timeline": "",
-                    #         "cf_person": {
-                    #             "last_name": "",
-                    #             "first_name": "",
-                    #             "middle_name": ""
-                    #         },
-                    #         "cf_contact": {
-                    #             "phone": "",
-                    #             "email": ""
-                    #         },
-                    #         "cf_issue_type": "",
-                    #         "cf_address": {
-                    #             "full_address": "",
-                    #             "appartments": "",
-                    #             "entrance": "",
-                    #             "floor": "",
-                    #             "lon": "",
-                    #             "lat": ""
-                    #         },
-                    #         "cf_priority": "",
-                    #         "cf_deadline": "",
-                    #         "cf_letter_numbers": {
-                    #             "incoming": "",
-                    #             "outgoing": ""
-                    #         },
-                    #         "cf_letter_dates": {
-                    #             "incoming": "",
-                    #             "outgoing": ""
-                    #         },
-                    #         "cf_sender": "",
-                    #         "cf_recipient": "",
-                    #         "cf_folder": "",
                             "cf_konkurs_link": "",
                             "cf_award": "",
                             "cf_brief": "",
@@ -509,8 +467,8 @@ def check_task(
     return None
 
 
-#   функция для получения загруженных данных
 def get_attachments(token: str, task_id: str) -> dict | None:
+    """Функция для получения загруженных данных к задаче."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/attachments/{node_id_default}/{task_id}"
