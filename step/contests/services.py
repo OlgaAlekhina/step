@@ -282,7 +282,6 @@ def create_task(token, contest_id, user_id):
     }
     try:
         response = requests.post(url, json=task, headers=headers)
-        print('response_data: ', response.json())
         response_data = response.json().get('data')
         result_data = {
             "task_id": response_data.get('id', None),

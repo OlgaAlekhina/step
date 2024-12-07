@@ -177,7 +177,7 @@ class QuitContestView(BaseContestView):
 class UserTaskView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
-        summary="Создать задачу для участия в конкурсе",
+        summary="Создание задачи для участия в конкурсе",
         description="Создание задачи для участия в конкурсе",
         request=CreateTaskSerializer,
         responses={
