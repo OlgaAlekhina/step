@@ -35,9 +35,8 @@ ___
 
 ### QA
 
-***Postman, Pytest***
-
-<a href="https://www.postman.com" style="text-decoration: none;"><img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman"></a>
+<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman">
+<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest" alt="PyTest">
 
 
 [//]: # (### Backend)
