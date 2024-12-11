@@ -23,15 +23,20 @@ ___
 
 ### Backend
 
-***Django Rest Framework***
+<img src="https://img.shields.io/badge/-DjangoRestFramework-464646?style=flat-square&logo=djangorestframework" alt="Django Rest Framework">
+<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger" alt="Swagger">
 
 ### Tools
 
-***PyCharm, Git, GitLab***
+<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=git" alt="PyCharm">
+<img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">
+<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=github" alt="GitLab">
 
 ### Containerization
 
-***Docker, Docker Compose, Nginx***
+<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=git" alt="Docker">
+<img src="https://img.shields.io/badge/-DockerCompose-464646?style=flat-square&logo=git" alt="Docker Compose">
+<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=github" alt="Nginx">
 
 ### QA
 
