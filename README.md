@@ -43,39 +43,6 @@ ___
 <img src="https://img.shields.io/badge/-Postman-FF6C37?style=flat-square&logo=postman&logoColor=ffffff" alt="Postman">
 <img src="https://img.shields.io/badge/-PyTest-0A9EDC?style=flat-square&logo=pytest&logoColor=ffffff" alt="PyTest">
 
-
-[//]: # (### Backend)
-
-[//]: # (![Django Rest Framework]&#40;https://img.shields.io/badge/-Django_Rest_Framework-090909?style=for-the-badge&logo=django&logoColor=17952c&#41;)
-
-[//]: # ()
-
-[//]: # (### Tools)
-
-[//]: # (![PyCharm]&#40;https://img.shields.io/badge/-pycharm-090909?style=for-the-badge&logo=pycharm&logoColor=e9fd01&#41;)
-
-[//]: # (![Git]&#40;https://img.shields.io/badge/-GIT-090909?style=for-the-badge&logo=git&logoColor=ff5169&#41;)
-
-[//]: # (![GitLab]&#40;https://img.shields.io/badge/-GITLAB-090909?style=for-the-badge&logo=gitlab&logoColor=FFA500&#41;)
-
-[//]: # ()
-
-[//]: # (### Containerization)
-
-[//]: # (![Docker]&#40;https://img.shields.io/badge/-Docker-090909?style=for-the-badge&logo=docker&logoColor=097CDB&#41;)
-
-[//]: # (![Docker Compose]&#40;https://img.shields.io/badge/-Docker_compose-090909?style=for-the-badge&logo=docker&logoColor=097CDB&#41;)
-
-[//]: # (![Nginx]&#40;https://img.shields.io/badge/-Nginx-090909?style=for-the-badge&logo=Nginx&logoColor=00FF00&#41;)
-
-[//]: # ()
-
-[//]: # (### QA)
-
-[//]: # (![Postman]&#40;https://img.shields.io/badge/-Postman-090909?style=for-the-badge&logo=postman&logoColor=#FF7F00&#41;)
-
-[//]: # (![Pytest]&#40;https://img.shields.io/badge/-Pytest-090909?style=for-the-badge&logo=pytest&logoColor=#FF7F00&#41;)
-
 </details>
 
 ___
