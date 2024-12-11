@@ -1,7 +1,8 @@
 from django.urls import path
 
 from .views import (
-    ArchiveContestsView, ContestDetailsView, ActiveContestsView, UserTasksView, QuitContestView, UserHistoryView, UserTaskView
+    ArchiveContestsView, ContestDetailsView, ActiveContestsView, UserTasksView, QuitContestView, UserHistoryView,
+    UserTaskView
 )
 
 urlpatterns = [
@@ -12,4 +13,5 @@ urlpatterns = [
     path('contests/user/my/history/', UserHistoryView.as_view(), name='my_history'),
     path('contests/user/my/task/', UserTaskView.as_view(), name='my_task'),
     path('contests/user/my/task/<uuid:task_id>/', QuitContestView.as_view(), name='quit_contest'),
+    path('contests/user/<uuid:user_id>/history/', UserHistoryView.as_view(), name='user_history'),
 ]

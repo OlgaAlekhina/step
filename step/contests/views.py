@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer)
+                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer,
+                          GetUserTasksListSerializer, GetUserHistoryListSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
                        get_history, contest_exists, create_task)
@@ -176,6 +177,7 @@ class QuitContestView(BaseContestView):
 
 class UserTaskView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         summary="Создание задачи для участия в конкурсе",
         description="Создание задачи для участия в конкурсе",
@@ -232,7 +234,7 @@ class UserTasksView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=GetArchiveSerializer()
+                response=GetUserTasksListSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -272,15 +274,19 @@ class UserHistoryView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=GetArchiveSerializer()
+                response=GetUserHistoryListSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
         tags=['Contests']
     )
-    def get(self, request):
+    def get(self, request, user_id=None):
         access_token = get_token()
-        user_id = request.auth.get('user_id')
+        if user_id is None:
+            user_id = request.auth.get('user_id')
+    # def get(self, request):
+    #     access_token = get_token()
+    #     user_id = request.auth.get('user_id')
         result_data = get_history(
             token=access_token,
             process_id=process_contests_id,

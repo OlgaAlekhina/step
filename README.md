@@ -1,4 +1,5 @@
 # Сервис для личного кабинета "Кловери Шаг" в рамках 9 потока.
+
 <details>
 <summary>
 
@@ -21,22 +22,30 @@ ___
 </summary>
 
 ### Backend
+
 ***Django Rest Framework***
 
 ### Tools
+
 ***PyCharm, Git, GitLab***
 
 ### Containerization
+
 ***Docker, Docker Compose, Nginx***
 
 ### QA
+
 ***Postman, Pytest***
+
+<a href="https://www.postman.com" style="text-decoration: none;"><img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman"></a>
+
 
 [//]: # (### Backend)
 
 [//]: # (![Django Rest Framework]&#40;https://img.shields.io/badge/-Django_Rest_Framework-090909?style=for-the-badge&logo=django&logoColor=17952c&#41;)
 
 [//]: # ()
+
 [//]: # (### Tools)
 
 [//]: # (![PyCharm]&#40;https://img.shields.io/badge/-pycharm-090909?style=for-the-badge&logo=pycharm&logoColor=e9fd01&#41;)
@@ -46,6 +55,7 @@ ___
 [//]: # (![GitLab]&#40;https://img.shields.io/badge/-GITLAB-090909?style=for-the-badge&logo=gitlab&logoColor=FFA500&#41;)
 
 [//]: # ()
+
 [//]: # (### Containerization)
 
 [//]: # (![Docker]&#40;https://img.shields.io/badge/-Docker-090909?style=for-the-badge&logo=docker&logoColor=097CDB&#41;)
@@ -55,6 +65,7 @@ ___
 [//]: # (![Nginx]&#40;https://img.shields.io/badge/-Nginx-090909?style=for-the-badge&logo=Nginx&logoColor=00FF00&#41;)
 
 [//]: # ()
+
 [//]: # (### QA)
 
 [//]: # (![Postman]&#40;https://img.shields.io/badge/-Postman-090909?style=for-the-badge&logo=postman&logoColor=#FF7F00&#41;)
@@ -169,7 +180,7 @@ ___
 | 1 | Филипенко Виктория | Заказчик, дизайнер  | @up2fika             |                                 |
 | 2 | Зайцев Антон       | Backend разработчик | @BlackMarvel         | https://github.com/Hashtagich   |
 | 3 | Алехина Ольга      | Backend разработчик | @olik_al             | https://github.com/OlgaAlekhina |
-| 4 | Спащенко Регина    | QA                  | @Sp_R_G              |                                 |
+| 4 | Спащенко Регина    | QA                  | @Sp_R_G              | https://github.com/SpaRegina    |
 
 </details>
 
@@ -292,24 +303,62 @@ ___
 ```
 {
   "detail": {
-    "code": "string",
-    "message": "string"
+    "code": "OK",
+    "message": "Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
   },
   "data": [
     {
-      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "description": "string",
-      "status": "string",
-      "deadline": "2024-12-05",
-      "award": "string",
-      "brief": "string",
-      "title": "string",
-      "konkurs_category": "string"
+      "id": "e2ccc043-2558-4bd1-872e-4df6cf7b5256",
+      "title": "Супер-конкурс",
+      "created_at": "06 November 2024",
+      "deadline": "28 November 2024",
+      "solution_link": "test_link",
+      "attachments": {
+        "id": "ce063f59-e352-4da9-939f-253644619eb4",
+        "name": "f6e3f9a9-79ea-4859-82ea-b1721bff0c70-cat.jpg",
+        "url": "media/4fc9986b-d03b-4801-a672-a191c941e17c/f6e3f9a9-79ea-4859-82ea-b1721bff0c70-cat.jpg",
+        "content_type": "image/jpeg"
+      }
     }
   ],
   "info": {
-    "api_version": "string",
-    "count": 0
+    "api_version": "0.0.1",
+    "count": 1
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><code>GET/contests/user/{user_id}/history/</code></summary>
+
+*Получение списка всех завершенных конкурсов конкретного участника, где тот участвовал.*
+
+```
+{
+  "detail": {
+    "code": "OK",
+    "message": "Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
+  },
+  "data": [
+    {
+      "id": "e2ccc043-2558-4bd1-872e-4df6cf7b5256",
+      "title": "Супер-конкурс",
+      "created_at": "06 November 2024",
+      "deadline": "28 November 2024",
+      "solution_link": "test_link",
+      "attachments": {
+        "id": "ce063f59-e352-4da9-939f-253644619eb4",
+        "name": "f6e3f9a9-79ea-4859-82ea-b1721bff0c70-cat.jpg",
+        "url": "media/4fc9986b-d03b-4801-a672-a191c941e17c/f6e3f9a9-79ea-4859-82ea-b1721bff0c70-cat.jpg",
+        "content_type": "image/jpeg"
+      }
+    }
+  ],
+  "info": {
+    "api_version": "0.0.1",
+    "count": 1
   }
 }
 ```
@@ -331,13 +380,24 @@ ___
   "data": [
     {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "title": "string",
       "description": "string",
-      "status": "string",
-      "deadline": "2024-12-05",
+      "status_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "status_name": "string",
+      "deadline": "2024-12-11",
       "award": "string",
       "brief": "string",
-      "title": "string",
-      "konkurs_category": "string"
+      "profession": "string",
+      "projects": "string",
+      "konkurs_category": "string",
+      "application_status": {
+        "application_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        "application_status": {
+          "code": "string",
+          "message": "string"
+        },
+        "solution_link": "string"
+      }
     }
   ],
   "info": {
@@ -349,9 +409,34 @@ ___
 
 </details>
 
+<details>
+<summary><code>POST/contests/user/my/task/</code></summary>
+
+*Создание задачи для участия в конкурсе*
+
+```
+{
+  "detail": {
+    "code": "string",
+    "message": "string"
+  },
+  "data": {
+    "task_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "status": "string",
+    "contest_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  },
+  "info": {
+    "api_version": "string",
+    "count": 0
+  }
+}
+```
+
+</details>
 
 <details>
-<summary><code>DELETE/api/contests/{contest_id}/quit_contest/</code></summary>
+<summary><code>DELETE/contests/user/my/task/{task_id}/</code></summary>
 
 *Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'*
 

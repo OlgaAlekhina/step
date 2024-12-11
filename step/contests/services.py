@@ -265,20 +265,20 @@ def create_task(token, contest_id, user_id):
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id_default}/{process_docontests_id}"
     task = {
-            "title": "",
-            "description": "",
-            "author": None,
-            "assignee": None,
-            "status_id": status_id_task_new,
-            "custom_fields": {
-                            "cf_konkurs_link": "",
-                            "cf_award": "",
-                            "cf_brief": "",
-                            "cf_startdate": "",
-                            "cf_konkurs_category": "",
-                            "cf_konkurs_id": str(contest_id),
-                            "cf_userid": user_id
-                        }
+        "title": "",
+        "description": "",
+        "author": None,
+        "assignee": None,
+        "status_id": status_id_task_new,
+        "custom_fields": {
+            "cf_konkurs_link": "",
+            "cf_award": "",
+            "cf_brief": "",
+            "cf_startdate": "",
+            "cf_konkurs_category": "",
+            "cf_konkurs_id": str(contest_id),
+            "cf_userid": user_id
+        }
     }
     try:
         response = requests.post(url, json=task, headers=headers)
