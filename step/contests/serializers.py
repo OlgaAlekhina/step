@@ -19,8 +19,7 @@ class CreateTaskSerializer(serializers.Serializer):
 
 
 class QueryParamsSerializer(serializers.Serializer):
-    status_id = serializers.ListSerializer(child=serializers.UUIDField(), required=False)
-    project_id = serializers.ListSerializer(child=serializers.CharField(), required=False)
+    status = serializers.ListSerializer(child=serializers.UUIDField(), required=False)
 
 
 class ErrorDetailSerializer(serializers.Serializer):

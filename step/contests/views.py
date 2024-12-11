@@ -1,13 +1,16 @@
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.conf import settings
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer,
+                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
@@ -312,6 +315,9 @@ class ContestTasksView(BaseContestView):
     parser_classes = [JSONParser]
 
     @extend_schema(
+        parameters=[
+            QueryParamsSerializer,
+        ],
         summary="Получение списка задач конкурса по статусам",
         description="Получение списка задач/участий в конкурсах по переданным статусам/у в рамках конкретного конкурса",
         responses={
@@ -330,7 +336,7 @@ class ContestTasksView(BaseContestView):
         if not status_ids:
             status_ids = (status_id_task_approved, status_id_task_completed)
         else:
-            status_ids = status_ids if len(status_ids) > 1 else ''.join(status_ids)
+            status_ids = tuple(status_ids) if len(status_ids) > 1 else ''.join(status_ids)
 
         result_data = get_contest_tasks(
             token=access_token,
