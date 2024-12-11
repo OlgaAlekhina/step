@@ -426,6 +426,42 @@ ___
 
 </details>
 
+<details>
+<summary><code>GET/contests/{contest_id}/task/</code></summary>
+
+*Получение списка задач/участий в конкурсах по переданным статусам/у в рамках конкретного конкурса<br>
+Пример запроса по одному статусу {url}/contests/{contest_id}/task/?status={status_id1}<br>
+Пример запроса по двум статусам {url}/contests/{contest_id}/task/?status={status_id1}&status={status_id2}*
+
+```
+{
+  "detail": {
+    "code": "string",
+    "message": "string"
+  },
+  "data": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "title": "string",
+      "description": "string",
+      "status_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "status_name": "string",
+      "deadline": "2024-12-11",
+      "award": "string",
+      "brief": "string",
+      "projects": "string",
+      "konkurs_category": "string"
+    }
+  ],
+  "info": {
+    "api_version": "string",
+    "count": 0
+  }
+}
+```
+
+</details>
+
 ___
 
 <details>

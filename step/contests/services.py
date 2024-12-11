@@ -724,3 +724,104 @@ def get_history(
         }
 
         return result_data, response.status_code
+
+
+def get_contest_tasks(
+        token: str,
+        process_id: str,
+        contest_id: str,
+        task_status: Union[Tuple[str, ...], List[str], str, None] = None,
+        message: str = "Список всех задач по заданному конкурсу и статусу или статусам"
+) -> Tuple[Dict, int]:
+    """Получение всех задач по переданному/ым конкурса, статусу/ам."""
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+
+    try:
+
+        status_condition = get_condition(
+            parameters_ids=task_status,
+            construction='AND status.id'
+        )
+
+        tasks = {
+            "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}'{status_condition}",
+            "fields": [
+                # "id",
+                # "title",
+                # "description",
+                # "status.id",
+                # "status.name",
+                # "custom_fields.cf_deadline",
+                # "custom_fields.cf_award",
+                # "custom_fields.cf_brief",
+                # "custom_fields.cf_projects",
+                # "custom_fields.cf_konkurs_category",
+            ]
+        }
+
+        response = requests.post(url, json=tasks, headers=headers)
+        response.raise_for_status()
+
+        response_data = response.json().get('data', [])
+        result_data = []
+        for task_contest in response_data:
+            status_name = task_contest['status'].get('name', None) if task_contest.get('status',
+                                                                                       None) is not None else None
+            status_id = task_contest['status'].get('id', None) if task_contest.get('status', None) is not None else None
+
+            custom_fields = task_contest.get('custom_fields', {})
+            cf_deadline = custom_fields.get('cf_deadline')
+            cf_award = custom_fields.get('cf_award')
+            cf_brief = custom_fields.get('cf_brief')
+            cf_projects = custom_fields.get('cf_projects')
+            cf_konkurs_category = custom_fields.get('cf_konkurs_category')
+
+            result_data.append(
+                {
+                    'id': task_contest.get('id', None),
+                    'title': task_contest.get('title', None),
+                    'description': task_contest.get('description', None),
+                    'status_id': status_id,
+                    'status_name': status_name,
+                    'deadline': datetime_convert(cf_deadline),
+                    'award': cf_award,
+                    'brief': cf_brief,
+                    'projects': cf_projects,
+                    'konkurs_category': cf_konkurs_category,
+                }
+            )
+
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": message
+            },
+            "data": result_data,
+            "info": {
+                "api_version": "0.0.1",
+                "count": len(result_data),
+                # "compression_algorithm": "lossy"
+            }
+        }
+        return result_data, response.status_code
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": f"HTTP_ERROR - {response.status_code}",
+                "message": str(http_err)
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+
+        return result_data, response.status_code

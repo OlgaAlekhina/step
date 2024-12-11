@@ -242,3 +242,23 @@ class GetUserHistoryListSerializer(serializers.Serializer):
     detail = DetailSerializer()
     data = UserHistoryListSerializer(many=True)
     info = InfoSerializer()
+
+
+class ContestTasksSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    status_id = serializers.UUIDField()
+    status_name = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    brief = serializers.CharField()
+    projects = serializers.CharField()
+    konkurs_category = serializers.CharField()
+
+
+class GetContestTasksListSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает список всех задач конкурса."""
+    detail = DetailSerializer()
+    data = ContestTasksSerializer(many=True)
+    info = InfoSerializer()

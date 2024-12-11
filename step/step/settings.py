@@ -109,6 +109,7 @@ STATUS_ID_NO_WINNER = str(os.getenv('STATUS_ID_NO_WINNER'))
 # ID Статусов участия в конкурсе
 STATUS_ID_TASK_COMPLETED: str = str(os.getenv('STATUS_ID_TASK_COMPLETED'))
 STATUS_ID_TASK_NEW = os.getenv('STATUS_ID_TASK_NEW')
+STATUS_ID_TASK_APPROVED = os.getenv('STATUS_ID_TASK_APPROVED')
 
 # Для расшифровки JWT-токенов
 ACCESS_TOKEN_PUBLIC_KEY = os.getenv('ACCESS_TOKEN_PUBLIC_KEY')
