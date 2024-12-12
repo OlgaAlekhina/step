@@ -22,26 +22,35 @@ ___
 </summary>
 
 ### Backend
+*Django Rest Framework, Swagger*
 
-<img src="https://img.shields.io/badge/-Django--Rest--Framework-464646?style=flat-square&logo=django" alt="Django Rest Framework">
-<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger" alt="Swagger">
+[//]: # (<img src="https://img.shields.io/badge/-Django--Rest--Framework-464646?style=flat-square&logo=django" alt="Django Rest Framework">)
+
+[//]: # (<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger" alt="Swagger">)
 
 ### Tools
 
-<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=pycharm" alt="PyCharm">
-<img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">
-<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=gitlab" alt="GitLab">
+[//]: # (<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=pycharm" alt="PyCharm">)
+
+[//]: # (<img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">)
+
+[//]: # (<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=gitlab" alt="GitLab">)
 
 ### Containerization
+*Docker, Docker Compos, Nginx*
 
-<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=docker" alt="Docker">
-<img src="https://img.shields.io/badge/-Docker--Compose-464646?style=flat-square&logo=docker" alt="Docker Compose">
-<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=nginx" alt="Nginx">
+[//]: # (<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=docker" alt="Docker">)
+
+[//]: # (<img src="https://img.shields.io/badge/-Docker--Compose-464646?style=flat-square&logo=docker" alt="Docker Compose">)
+
+[//]: # (<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=nginx" alt="Nginx">)
 
 ### QA
+*Postman, PyTest*
 
-<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman">
-<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest" alt="PyTest">
+[//]: # (<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman">)
+
+[//]: # (<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest" alt="PyTest">)
 
 </details>
 
