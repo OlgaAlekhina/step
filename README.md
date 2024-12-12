@@ -23,29 +23,25 @@ ___
 
 ### Backend
 
-<img src="https://img.shields.io/badge/-Django--Rest--Framework-44B78B?style=flat-square&logo=django&logoColor=ffffff" alt="Django Rest Framework">
-<img src="https://img.shields.io/badge/-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=00000" alt="Swagger">
+<img src="https://img.shields.io/badge/-Django--Rest--Framework-464646?style=flat-square&logo=django&logoColor=ffffff" alt="Django Rest Framework">
+<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger&logoColor=00000" alt="Swagger">
 
 ### Tools
 
-<img src="https://img.shields.io/badge/-PyCharm-21D789?style=flat-square&logo=pycharm&logoColor=ffffff" alt="PyCharm">
-
-<img src="https://img.shields.io/badge/-Git-005033?style=flat-square&logo=git" alt="Git">
-
+<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=pycharm&logoColor=ffffff" alt="PyCharm">
 <img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">
-
-<img src="https://img.shields.io/badge/-GitLab-FC6D26?style=flat-square&logo=gitlab&logoColor=ffffff" alt="GitLab">
+<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=gitlab&logoColor=ffffff" alt="GitLab">
 
 ### Containerization
 
-<img src="https://img.shields.io/badge/-Docker-2496ED?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker">
-<img src="https://img.shields.io/badge/-Docker--Compose-2496ED?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker Compose">
-<img src="https://img.shields.io/badge/-Nginx-009639?style=flat-square&logo=nginx&logoColor=ffffff" alt="Nginx">
+<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker">
+<img src="https://img.shields.io/badge/-Docker--Compose-464646?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker Compose">
+<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=nginx&logoColor=ffffff" alt="Nginx">
 
 ### QA
 
-<img src="https://img.shields.io/badge/-Postman-FF6C37?style=flat-square&logo=postman&logoColor=ffffff" alt="Postman">
-<img src="https://img.shields.io/badge/-PyTest-0A9EDC?style=flat-square&logo=pytest&logoColor=ffffff" alt="PyTest">
+<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman&logoColor=ffffff" alt="Postman">
+<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest&logoColor=ffffff" alt="PyTest">
 
 </details>
 
