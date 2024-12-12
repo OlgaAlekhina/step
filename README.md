@@ -23,25 +23,25 @@ ___
 
 ### Backend
 
-<img src="https://img.shields.io/badge/-Django--Rest--Framework-464646?style=flat-square&logo=django&logoColor=ffffff" alt="Django Rest Framework">
-<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger&logoColor=00000" alt="Swagger">
+<img src="https://img.shields.io/badge/-Django--Rest--Framework-464646?style=flat-square&logo=django" alt="Django Rest Framework">
+<img src="https://img.shields.io/badge/-Swagger-464646?style=flat-square&logo=swagger" alt="Swagger">
 
 ### Tools
 
-<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=pycharm&logoColor=ffffff" alt="PyCharm">
+<img src="https://img.shields.io/badge/-PyCharm-464646?style=flat-square&logo=pycharm" alt="PyCharm">
 <img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">
-<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=gitlab&logoColor=ffffff" alt="GitLab">
+<img src="https://img.shields.io/badge/-GitLab-464646?style=flat-square&logo=gitlab" alt="GitLab">
 
 ### Containerization
 
-<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker">
-<img src="https://img.shields.io/badge/-Docker--Compose-464646?style=flat-square&logo=docker&logoColor=ffffff" alt="Docker Compose">
-<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=nginx&logoColor=ffffff" alt="Nginx">
+<img src="https://img.shields.io/badge/-Docker-464646?style=flat-square&logo=docker" alt="Docker">
+<img src="https://img.shields.io/badge/-Docker--Compose-464646?style=flat-square&logo=docker" alt="Docker Compose">
+<img src="https://img.shields.io/badge/-Nginx-464646?style=flat-square&logo=nginx" alt="Nginx">
 
 ### QA
 
-<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman&logoColor=ffffff" alt="Postman">
-<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest&logoColor=ffffff" alt="PyTest">
+<img src="https://img.shields.io/badge/-Postman-464646?style=flat-square&logo=postman" alt="Postman">
+<img src="https://img.shields.io/badge/-PyTest-464646?style=flat-square&logo=pytest" alt="PyTest">
 
 </details>
 
