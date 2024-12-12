@@ -24,12 +24,16 @@ ___
 ### Backend
 
 <img src="https://img.shields.io/badge/-Django--Rest--Framework-44B78B?style=flat-square&logo=django&logoColor=ffffff" alt="Django Rest Framework">
-<img src="https://img.shields.io/badge/-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=ffffff" alt="Swagger">
+<img src="https://img.shields.io/badge/-Swagger-85EA2D?style=flat-square&logo=swagger&logoColor=00000" alt="Swagger">
 
 ### Tools
 
 <img src="https://img.shields.io/badge/-PyCharm-21D789?style=flat-square&logo=pycharm&logoColor=ffffff" alt="PyCharm">
-<img src="https://img.shields.io/badge/-Git-F05033?style=flat-square&logo=git&logoColor=ffffff" alt="Git">
+
+<img src="https://img.shields.io/badge/-Git-005033?style=flat-square&logo=git" alt="Git">
+
+<img src="https://img.shields.io/badge/-Git-464646?style=flat-square&logo=git" alt="Git">
+
 <img src="https://img.shields.io/badge/-GitLab-FC6D26?style=flat-square&logo=gitlab&logoColor=ffffff" alt="GitLab">
 
 ### Containerization
