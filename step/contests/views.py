@@ -1,16 +1,20 @@
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from django.conf import settings
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer)
+                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
+                          GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
-                       get_history, contest_exists, create_task)
+                       get_history, contest_exists, create_task, get_contest_tasks)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -25,6 +29,9 @@ status_id_acceptance_works = settings.STATUS_ID_ACCEPTANCE_WORKS
 status_id_done = settings.STATUS_ID_DONE
 status_id_acceptance_works_done = settings.STATUS_ID_ACCEPTANCE_WORKS_DONE
 status_id_no_winner = settings.STATUS_ID_NO_WINNER
+
+status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
+status_id_task_approved = settings.STATUS_ID_TASK_APPROVED
 
 user_id_test = 'seghstr3345ega'
 
@@ -176,6 +183,7 @@ class QuitContestView(BaseContestView):
 
 class UserTaskView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         summary="Создание задачи для участия в конкурсе",
         description="Создание задачи для участия в конкурсе",
@@ -232,7 +240,7 @@ class UserTasksView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=GetArchiveSerializer()
+                response=GetUserTasksListSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -272,15 +280,19 @@ class UserHistoryView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=GetArchiveSerializer()
+                response=GetUserHistoryListSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
         tags=['Contests']
     )
-    def get(self, request):
+    def get(self, request, user_id=None):
         access_token = get_token()
-        user_id = request.auth.get('user_id')
+        if user_id is None:
+            user_id = request.auth.get('user_id')
+        # def get(self, request):
+        #     access_token = get_token()
+        #     user_id = request.auth.get('user_id')
         result_data = get_history(
             token=access_token,
             process_id=process_contests_id,
@@ -294,5 +306,43 @@ class UserHistoryView(BaseContestView):
             # projects_ids='step',
             # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
+        )
+        return Response(result_data[0], status=result_data[1])
+
+
+class ContestTasksView(BaseContestView):
+    # permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    @extend_schema(
+        parameters=[
+            QueryParamsSerializer,
+        ],
+        summary="Получение списка задач конкурса по статусам",
+        description="Получение списка задач/участий в конкурсах по переданным статусам/у в рамках конкретного конкурса",
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=GetContestTasksListSerializer()
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Contests']
+    )
+    def get(self, request, contest_id):
+        access_token = get_token()
+        status_ids = request.query_params.getlist('status')
+
+        if not status_ids:
+            status_ids = (status_id_task_approved, status_id_task_completed)
+        else:
+            status_ids = tuple(status_ids) if len(status_ids) > 1 else ''.join(status_ids)
+
+        result_data = get_contest_tasks(
+            token=access_token,
+            process_id=process_participation_contest_id,
+            contest_id=contest_id,
+            task_status=status_ids,
+            message="Получение списка задач конкурса по статусам"
         )
         return Response(result_data[0], status=result_data[1])

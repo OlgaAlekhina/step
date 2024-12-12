@@ -19,8 +19,7 @@ class CreateTaskSerializer(serializers.Serializer):
 
 
 class QueryParamsSerializer(serializers.Serializer):
-    status_id = serializers.ListSerializer(child=serializers.UUIDField(), required=False)
-    project_id = serializers.ListSerializer(child=serializers.CharField(), required=False)
+    status = serializers.ListSerializer(child=serializers.UUIDField(), required=False)
 
 
 class ErrorDetailSerializer(serializers.Serializer):
@@ -179,4 +178,86 @@ class GetContestsListSerializer(serializers.Serializer):
     """Сериализатор для формата ответа API, который возвращает список конкурсов по заданным параметрам."""
     detail = DetailSerializer()
     data = ContestsListSerializer(many=True)
+    info = InfoSerializer()
+
+
+class ApplicationStatusSerializer(serializers.Serializer):
+    """Сериализатор статуса загруженного решения."""
+    code = serializers.CharField()
+    message = serializers.CharField()
+
+
+class ApplicationSerializer(serializers.Serializer):
+    """Сериализатор загруженного решения."""
+    application_id = serializers.UUIDField()
+    application_status = ApplicationStatusSerializer()
+    solution_link = serializers.URLField()
+
+
+class UserTasksListSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    status_id = serializers.UUIDField()
+    status_name = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    brief = serializers.CharField()
+    profession = serializers.CharField()
+    projects = serializers.CharField()
+    konkurs_category = serializers.CharField()
+    application_status = ApplicationSerializer()
+
+
+class GetUserTasksListSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает список всех заданий пользователя."""
+    detail = DetailSerializer()
+    data = UserTasksListSerializer(many=True)
+    info = InfoSerializer()
+
+
+class AttachmentForHistorySerializer(serializers.Serializer):
+    """Сериализатор загруженных данных к задаче."""
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    url = serializers.URLField()
+    content_type = serializers.CharField()
+
+
+class UserHistoryListSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    created_at = serializers.DateField(format="%d %B %Y")
+    deadline = serializers.DateField(format="%d %B %Y")
+    solution_link = serializers.URLField()
+    attachments = AttachmentForHistorySerializer()
+
+
+class GetUserHistoryListSerializer(serializers.Serializer):
+    """
+    Сериализатор для формата ответа API, который возвращает список всех завершенных конкурсов,
+    где пользователя участвовал.
+    """
+    detail = DetailSerializer()
+    data = UserHistoryListSerializer(many=True)
+    info = InfoSerializer()
+
+
+class ContestTasksSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    description = serializers.CharField()
+    status_id = serializers.UUIDField()
+    status_name = serializers.CharField()
+    deadline = serializers.DateField(format="%d.%m.%Y")
+    award = serializers.CharField()
+    brief = serializers.CharField()
+    projects = serializers.CharField()
+    konkurs_category = serializers.CharField()
+
+
+class GetContestTasksListSerializer(serializers.Serializer):
+    """Сериализатор для формата ответа API, который возвращает список всех задач конкурса."""
+    detail = DetailSerializer()
+    data = ContestTasksSerializer(many=True)
     info = InfoSerializer()
