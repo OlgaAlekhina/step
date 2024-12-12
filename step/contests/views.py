@@ -227,7 +227,12 @@ class UserTaskView(BaseContestView):
                     return Response(new_contest, status=status.HTTP_201_CREATED)
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors)
+        response = {'detail': {
+            "code": "BAD_REQUEST",
+            "message": serializer.errors
+            }
+        }
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserTasksView(BaseContestView):
