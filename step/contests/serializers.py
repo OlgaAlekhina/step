@@ -13,6 +13,17 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
     return result
 
 
+class CreateConfigsSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField()
+    account_id = serializers.UUIDField()
+    user_id = serializers.UUIDField()
+    object_type = serializers.CharField()
+    object_item = serializers.UUIDField()
+    object_code = serializers.CharField()
+    name = serializers.CharField()
+    data = serializers.JSONField()
+
+
 class CreateTaskSerializer(serializers.Serializer):
     """Сериализатор для создания задачи на участие в конкурсе """
     contest_id = serializers.UUIDField()

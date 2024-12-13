@@ -30,6 +30,27 @@ jwt_algorithm = settings.JWT_ALGORITHM
 status_id_done = settings.STATUS_ID_DONE
 
 
+def get_configs(project_id: str, account_id: Union[str, None], configs: List[str]) -> Dict:
+    """
+    Получить из реестра значения конфигов типа config для данных project_id и account_id
+    """
+    object_types = ','.join(configs)
+    if account_id:
+        url = f"http://127.0.0.1:8002/api/configs/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
+    else:
+        url = f"http://127.0.0.1:8002/api/configs/?project_id={project_id}&object_type={object_types}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        response_data = response.json()
+        results = {}
+        for result in response_data:
+            results.update({
+                result.get('object_type'): result.get('data')
+            })
+        return {'data': results}
+    return None
+
+
 def get_token():
     """
     Получить или обновить токен доступа для аутентификации пользователя.

@@ -11,10 +11,11 @@ from rest_framework import status, permissions
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
-                          GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer)
+                          GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
+                          CreateConfigsSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
-                       get_history, contest_exists, create_task, get_contest_tasks)
+                       get_history, contest_exists, create_task, get_contest_tasks, get_configs)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -121,6 +122,32 @@ class ActiveContestsView(BaseContestView):
             message="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы."
         )
         return Response(result_data[0], status=result_data[1])
+
+
+class ConfigsView(BaseContestView):
+    @extend_schema(
+        summary="Получение идентификаторов",
+        description="Получение идентификаторов",
+        parameters=[
+            OpenApiParameter('Project', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                # response=ContestDetailsResponseSerializer()
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Contests']
+    )
+
+    def get(self, request, config_type):
+        print('meta: ', request.META)
+        project_id = request.META['HTTP_PROJECT']
+        account_id = request.META['HTTP_ACCOUNT']
+        response_data = get_configs(project_id, account_id, [config_type])
+        return Response(response_data)
 
 
 class ContestDetailsView(BaseContestView):
