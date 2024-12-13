@@ -145,7 +145,7 @@ class ConfigsView(BaseContestView):
     def get(self, request, config_type):
         print('meta: ', request.META)
         project_id = request.META['HTTP_PROJECT']
-        account_id = request.META['HTTP_ACCOUNT']
+        account_id = request.META['HTTP_ACCOUNT'] if 'HTTP_ACCOUNT' in request.META else None
         response_data = get_configs(project_id, account_id, [config_type])
         return Response(response_data)
 
