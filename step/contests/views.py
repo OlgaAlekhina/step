@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 from django.conf import settings
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -7,15 +7,15 @@ from drf_spectacular.types import OpenApiTypes
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status, permissions
+from rest_framework import status, permissions, serializers
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
-                          CreateConfigsSerializer)
+                          CreateConfigSerializer)
 
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
-                       get_history, contest_exists, create_task, get_contest_tasks, get_configs)
+                       get_history, contest_exists, create_task, get_contest_tasks, get_configs, create_config)
 
 # ID Конкурсов
 process_contests_id = settings.PROCESS_CONTESTS_ID
@@ -139,7 +139,7 @@ class ConfigsView(BaseContestView):
             ),
             **BaseContestView.COMMON_RESPONSES
         },
-        tags=['Contests']
+        tags=['Configs']
     )
 
     def get(self, request, config_type):
@@ -148,6 +148,46 @@ class ConfigsView(BaseContestView):
         account_id = request.META['HTTP_ACCOUNT'] if 'HTTP_ACCOUNT' in request.META else None
         response_data = get_configs(project_id, account_id, [config_type])
         return Response(response_data)
+
+
+class CreateConfigView(BaseContestView):
+    permission_classes = [permissions.IsAuthenticated]
+    @extend_schema(
+        summary="Добавление идентификаторов в реестр",
+        description="Добавление идентификаторов в реестр",
+        request=CreateConfigSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="Successful Response",
+                # response=TaskResponseSerializer()
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Configs']
+    )
+    def post(self, request):
+        request_data = request.data
+        print('data: ', request_data)
+        serializer = CreateConfigSerializer(data=request_data)
+        if serializer.is_valid():
+            project_id = serializer.validated_data['project_id']
+            account_id = serializer.validated_data['account_id'] if 'account_id' in serializer.validated_data else ''
+            object_type = serializer.validated_data['object_type']
+            data = serializer.validated_data['data']
+            config_data = {
+                "project_id": str(project_id),
+                "account_id": str(account_id) if account_id else None,
+                "user_id": request.auth.get('user_id'),
+                "object_type": object_type,
+                "object_code": f"{project_id}:{account_id}:{object_type}",
+                # "object_item": serializer.validated_data['object_item'],
+                # "name": serializer.validated_data['name'],
+                "data": data
+            }
+            response_data = create_config(config_data)
+            return Response(response_data[0], response_data[1])
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ContestDetailsView(BaseContestView):

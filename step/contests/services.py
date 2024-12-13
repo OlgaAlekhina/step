@@ -51,6 +51,40 @@ def get_configs(project_id: str, account_id: Union[str, None], configs: List[str
     return None
 
 
+def create_config(config_data):
+    print('configs_data', config_data)
+    url = "http://127.0.0.1:8002/api/config/"
+    try:
+        response = requests.post(url, json=config_data)
+        response.raise_for_status()
+        response_data = response.json()
+        result_data = {"detail": {
+            "code": "OK",
+            "message": "Идентификатор успешно создан."
+            },
+            "data": response_data
+        }
+        return result_data, 201
+
+    except HTTPError as http_err:
+        result_data = {
+            "detail": {
+                "code": "BAD_REQUEST",
+                "message": "Идентификатор такого типа уже существует"
+            }
+        }
+        return result_data, response.status_code
+
+    except RequestException as err:
+        result_data = {
+            "detail": {
+                "code": f"REQUEST_ERROR - {response.status_code}",
+                "message": str(err)
+            }
+        }
+        return result_data, response.status_code
+
+
 def get_token():
     """
     Получить или обновить токен доступа для аутентификации пользователя.
