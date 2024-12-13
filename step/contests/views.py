@@ -129,8 +129,8 @@ class ConfigsView(BaseContestView):
         summary="Получение идентификаторов",
         description="Получение идентификаторов",
         parameters=[
-            OpenApiParameter('Project', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
-            OpenApiParameter('Account', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
         ],
         responses={
             200: OpenApiResponse(
@@ -144,8 +144,8 @@ class ConfigsView(BaseContestView):
 
     def get(self, request, config_type):
         print('meta: ', request.META)
-        project_id = request.META['HTTP_PROJECT']
-        account_id = request.META['HTTP_ACCOUNT'] if 'HTTP_ACCOUNT' in request.META else None
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
         response_data = get_configs(project_id, account_id, [config_type])
         return Response(response_data)
 
