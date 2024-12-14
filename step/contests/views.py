@@ -126,8 +126,8 @@ class ActiveContestsView(BaseContestView):
 
 class ConfigsView(BaseContestView):
     @extend_schema(
-        summary="Получение идентификаторов",
-        description="Получение идентификаторов",
+        summary="Получение идентификаторов из реестра",
+        description="Получение идентификаторов из реестра",
         parameters=[
             OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
             OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
@@ -135,7 +135,7 @@ class ConfigsView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                # response=ContestDetailsResponseSerializer()
+                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -143,7 +143,6 @@ class ConfigsView(BaseContestView):
     )
 
     def get(self, request, config_type):
-        print('meta: ', request.META)
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
         response_data = get_configs(project_id, account_id, [config_type])
@@ -159,7 +158,7 @@ class CreateConfigView(BaseContestView):
         responses={
             201: OpenApiResponse(
                 description="Successful Response",
-                # response=TaskResponseSerializer()
+                # response=
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -167,7 +166,6 @@ class CreateConfigView(BaseContestView):
     )
     def post(self, request):
         request_data = request.data
-        print('data: ', request_data)
         serializer = CreateConfigSerializer(data=request_data)
         if serializer.is_valid():
             project_id = serializer.validated_data['project_id']
@@ -196,6 +194,10 @@ class ContestDetailsView(BaseContestView):
     @extend_schema(
         summary="Получение конкретного конкурса",
         description="Получение данных одного конкурса по его id",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -207,14 +209,23 @@ class ContestDetailsView(BaseContestView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id, [])
+        if configs.get('data'):
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+        else:
+            return Response({'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                            status=status.HTTP_401_UNAUTHORIZED)
         user_data = {'user_task_id': None, 'user_task_status': {'code': 'NOT_DEFINED', 'message': 'Не определен'}}
         # если запрос успешно прошел аутентификацию, получаем id пользователя
         if request.auth:
             user_id = request.auth.get('user_id')
             # проверяем, отправил пользователь решение или нет
-            result = get_user_task(access_token, contest_id, user_id)
+            result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id)
             user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
-        contest_data = get_contest(access_token, contest_id)
+        contest_data = get_contest(access_token, contest_id, node_id)
         if not contest_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
@@ -275,7 +286,7 @@ class UserTaskView(BaseContestView):
             contest_id = serializer.validated_data['contest_id']
             access_token = get_token()
             if contest_exists(access_token, contest_id):
-                task = get_user_task(access_token, contest_id, user_id)
+                task = get_user_task(access_token, contest_id, user_id, None, None)
                 if task and task.get('user_task'):
                     response = {
                         "detail": {

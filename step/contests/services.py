@@ -115,18 +115,22 @@ def get_token():
         return token_cache['access_token']
 
 
-def get_user_task(token: str, contest_id: str, user_id: str) -> dict:
+def get_user_task(token: str, contest_id: str, user_id: str, task_process_id: Union[str, None], node_id: Union[str, None]) -> dict:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
     Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
     Она проверяет наличие заявки и ее статус, возвращая соответствующий код и сообщение.
     """
+    if not node_id:
+        node_id = node_id_default
+    if not task_process_id:
+        task_process_id = process_docontests_id
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
     try:
         response = requests.post(url, headers=headers, json={
-            "rql": f"process.id = '{process_docontests_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
+            "rql": f"process.id = '{task_process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
             "fields": []})
         response_data = response.json().get('data', [])
         if response_data:
@@ -185,11 +189,11 @@ def get_condition(parameters_ids: Union[Tuple[str, ...], List[str], str, None], 
     return parameter_condition
 
 
-def get_contest(token: str, contest_id: str) -> Tuple[Dict, int] | list:
+def get_contest(token: str, contest_id: str, node_id: str) -> Tuple[Dict, int] | list:
     """Получение данных одного конкурса по его id."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
+    url = f"{base_url}/api/tasks/{node_id}/{contest_id}"
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
