@@ -428,7 +428,7 @@ class UserHistoryView(BaseContestView):
         access_token = get_token()
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
-        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'contest_status_id'])
+        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'task_process_id', 'contest_status_id'])
         if configs.get('data'):
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
