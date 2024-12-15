@@ -1,19 +1,15 @@
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 from django.conf import settings
-
-from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
-
+from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer, OpenApiParameter
+from rest_framework import status, permissions, serializers
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status, permissions, serializers
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
                           CreateConfigSerializer)
-
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
                        get_history, contest_exists, create_task, get_contest_tasks, get_configs, create_config)
 
@@ -27,14 +23,12 @@ status_id_rejection = settings.STATUS_ID_REJECTION
 status_id_sum_results = settings.STATUS_ID_SUM_RESULTS
 status_id_voting = settings.STATUS_ID_VOTING
 # status_id_acceptance_works = settings.STATUS_ID_ACCEPTANCE_WORKS
-status_id_done = settings.STATUS_ID_DONE
+# status_id_done = settings.STATUS_ID_DONE
 status_id_acceptance_works_done = settings.STATUS_ID_ACCEPTANCE_WORKS_DONE
-status_id_no_winner = settings.STATUS_ID_NO_WINNER
+# status_id_no_winner = settings.STATUS_ID_NO_WINNER
 
 status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
 status_id_task_approved = settings.STATUS_ID_TASK_APPROVED
-
-user_id_test = 'seghstr3345ega'
 
 
 class BaseContestView(APIView):
@@ -70,6 +64,10 @@ class ArchiveContestsView(BaseContestView):
     @extend_schema(
         summary="Получение списка архивных конкурсов",
         description="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов.",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -81,16 +79,28 @@ class ArchiveContestsView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id, [])
+        if configs.get('data'):
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            status_id_done = configs.get('data').get('contest_status_id').get('done')
+            status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
+
+        else:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
         result_data = get_contests(
             token=access_token,
-            process_id=process_contests_id,
+            node_id=node_id,
+            process_id=contest_process_id,
             status_ids=(status_id_done, status_id_no_winner),
-            # status_ids=('Завершен', 'Победитель не выбран'),  # Если передавать name а не id
-            # projects_ids=None,
-            # projects_ids='step',
-            projects_ids=('step', 'start'),
+            projects_ids=None,
             message="Получение списка всех конкурсов со статусом Завершен и Победитель не выбран. Архив конкурсов."
         )
+
         return Response(result_data[0], status=result_data[1])
 
 
@@ -357,14 +367,15 @@ class UserTasksView(BaseContestView):
                 status_id_acceptance_works_done,
                 status_id_voting,
                 status_id_sum_results,
-                status_id_done
+                settings.STATUS_ID_DONE
             ),
             # status_ids='Прием работ',  # Если передавать name а не id
             projects_ids=None,
             user_id=user_id,
             # projects_ids='step',
             # projects_ids=('step', 'start'),
-            message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, Подведение итогов, Завершен. Для раздела мои задания."
+            message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, "
+                    "Подведение итогов, Завершен. Для раздела мои задания."
         )
         return Response(result_data[0], status=result_data[1])
 
@@ -397,7 +408,7 @@ class UserHistoryView(BaseContestView):
             process_id=process_contests_id,
             # status_ids=None,
             status_ids=(
-                status_id_done
+                settings.STATUS_ID_DONE
             ),
             # status_ids='Прием работ',  # Если передавать name а не id
             projects_ids=None,
