@@ -240,20 +240,20 @@ def get_contest(token: str, contest_id: str, node_id: Union[str, None]) -> Tuple
         return result_data, response.status_code
 
 
-def patch_task(token: str, task_id: str) -> Tuple[Dict, int] | None:
+def patch_task(token: str, task_id: str, node_id: str, task_process_id: str, task_status_rejection: str) -> Tuple[Dict, int] | None:
     """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
     access_token = token
     # проверяем, что есть такая заявка на участие в конкурсе
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id_default}/{task_id}"
+    url = f"{base_url}/api/tasks/{node_id}/{task_id}"
     try:
         response = requests.get(url, headers=headers)
         response_data = response.json().get('data', [])
         # Если заявка есть, меняем статус
-        if response_data and response_data.get('process').get('name') == 'Участие в конкурсе':
+        if response_data and response_data.get('process').get('id') == task_process_id:
             headers = {"Authorization": f'Bearer {access_token}'}
-            url = f"{base_url}/api/tasks/{node_id_default}/{task_id}"
-            data = {"status_id": status_id_rejection}
+            url = f"{base_url}/api/tasks/{node_id}/{task_id}"
+            data = {"status_id": task_status_rejection}
             try:
                 response = requests.patch(url, headers=headers, json=data)
                 response.raise_for_status()

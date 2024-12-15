@@ -267,6 +267,10 @@ class QuitContestView(BaseContestView):
     @extend_schema(
         summary="Отказ от участия в конкурсе",
         description="Отказ от участия в конкурсе: изменение статуса заявки на 'Отказ'",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -277,8 +281,20 @@ class QuitContestView(BaseContestView):
         tags=['Contests']
     )
     def delete(self, request, task_id):
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id,
+                              ['task_process_id', 'contest_process_id', 'node_id', 'task_status_id'])
+        if configs.get('data'):
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
+        else:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
         access_token = get_token()
-        response_data = patch_task(access_token, task_id)
+        response_data = patch_task(access_token, task_id, node_id, task_process_id, task_status_rejection)
         if not response_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)
