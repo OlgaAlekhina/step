@@ -120,7 +120,8 @@ def get_user_task(
         contest_id: str,
         user_id: str,
         task_process_id: str,
-        node_id: str
+        node_id: str,
+        task_status_id: dict
 ) -> dict:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
@@ -137,12 +138,15 @@ def get_user_task(
         response_data = response.json().get('data', [])
         if response_data:
             for response in response_data:
-                status = response.get('status').get('name', None)
-                if status == 'Задание выполнено':
+                status_new = task_status_id.get('new')
+                status_approved = task_status_id.get('approved')
+                status_completed = task_status_id.get('completed')
+                status = response.get('status').get('id')
+                if status == status_completed:
                     task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
                     user_task = response.get('id', None)
                     break
-                elif status in ('Новая', 'Одобрена'):
+                elif status in (status_new, status_approved):
                     task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
                     user_task = response.get('id', None)
                     break

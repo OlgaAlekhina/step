@@ -236,10 +236,11 @@ class ContestDetailsView(BaseContestView):
         access_token = get_token()
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
-        configs = get_configs(project_id, account_id, ['task_process_id', 'node_id'])
+        configs = get_configs(project_id, account_id, ['task_process_id', 'node_id', 'task_status_id'])
         if configs.get('data'):
             task_process_id = configs.get('data').get('task_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
         else:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
@@ -249,7 +250,7 @@ class ContestDetailsView(BaseContestView):
         if request.auth:
             user_id = request.auth.get('user_id')
             # проверяем, отправил пользователь решение или нет
-            result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id)
+            result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
             user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
         contest_data = get_contest(access_token, contest_id, node_id)
         if not contest_data:
@@ -333,6 +334,7 @@ class UserTaskView(BaseContestView):
             task_process_id = configs.get('data').get('task_process_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
             task_status_new = configs.get('data').get('task_status_id').get('new')
         else:
             return Response(
@@ -344,7 +346,7 @@ class UserTaskView(BaseContestView):
             contest_id = serializer.validated_data['contest_id']
             access_token = get_token()
             if contest_exists(access_token, contest_id, node_id, contest_process_id):
-                task = get_user_task(access_token, contest_id, user_id, task_process_id, node_id)
+                task = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
                 if task and task.get('user_task'):
                     response = {
                         "detail": {
