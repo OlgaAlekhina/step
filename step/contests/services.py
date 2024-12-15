@@ -526,11 +526,11 @@ def check_task(
     return None
 
 
-def get_attachments(token: str, task_id: str) -> dict | None:
+def get_attachments(token: str, task_id: str, node_id: str) -> dict | None:
     """Функция для получения загруженных данных к задаче."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/attachments/{node_id_default}/{task_id}"
+    url = f"{base_url}/api/attachments/{node_id}/{task_id}"
     response = requests.get(url, headers=headers)
     response_data = response.json().get('data', [])
     if response_data:
@@ -733,7 +733,7 @@ def get_history(
                 custom_fields = contest.get('custom_fields', {})
                 cf_deadline = custom_fields.get('cf_deadline')
                 application_id = task.get('application_id')
-                attachments = get_attachments(token, application_id)
+                attachments = get_attachments(token, application_id, node_id)
 
                 result_data.append(
                     {
