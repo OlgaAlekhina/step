@@ -119,18 +119,14 @@ def get_user_task(
         token: str,
         contest_id: str,
         user_id: str,
-        task_process_id: Union[str, None],
-        node_id: Union[str, None]
+        task_process_id: str,
+        node_id: str
 ) -> dict:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
     Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
     Она проверяет наличие заявки и ее статус, возвращая соответствующий код и сообщение.
     """
-    if not node_id:
-        node_id = node_id_default
-    if not task_process_id:
-        task_process_id = process_docontests_id
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/rql/{node_id}"
@@ -313,28 +309,28 @@ def patch_task(token: str, task_id: str) -> Tuple[Dict, int] | None:
         return result_data, response.status_code
 
 
-def contest_exists(token: str, contest_id: str) -> bool:
+def contest_exists(token: str, contest_id: str, node_id: str, contest_process_id: str) -> bool:
     """Проверяет, существует ли конкурс с данным contest_id"""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id_default}/{contest_id}"
+    url = f"{base_url}/api/tasks/{node_id}/{contest_id}"
     response = requests.get(url, headers=headers)
     response_data = response.json().get('data', [])
-    if response_data and response_data.get('process').get('name') == 'Конкурс':
+    if response_data and response_data.get('process').get('id') == contest_process_id:
         return True
     return False
 
 
-def create_task(token, contest_id, user_id):
+def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_process_id: str, task_status_new: str):
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id_default}/{process_docontests_id}"
+    url = f"{base_url}/api/tasks/{node_id}/{task_process_id}"
     task = {
         "title": "",
         "description": "",
         "author": None,
         "assignee": None,
-        "status_id": status_id_task_new,
+        "status_id": task_status_new,
         "custom_fields": {
             "cf_konkurs_link": "",
             "cf_award": "",
