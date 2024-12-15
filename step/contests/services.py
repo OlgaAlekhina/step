@@ -195,7 +195,7 @@ def get_condition(parameters_ids: Union[Tuple[str, ...], List[str], str, None], 
     return parameter_condition
 
 
-def get_contest(token: str, contest_id: str, node_id: str) -> Tuple[Dict, int] | list:
+def get_contest(token: str, contest_id: str, node_id: Union[str, None]) -> Tuple[Dict, int] | list:
     """Получение данных одного конкурса по его id."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
@@ -387,7 +387,7 @@ def create_task(token, contest_id, user_id):
 
 def get_contests(
         token: str,
-        node_id: str,
+        node_id: Union[str, None],
         process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
@@ -545,6 +545,7 @@ def get_attachments(token: str, task_id: str) -> dict | None:
 
 def get_tasks(
         token: str,
+        node_id: str,
         process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
@@ -554,7 +555,7 @@ def get_tasks(
     """Получение всех конкурсов по переданным параметрам для раздела мои задачи."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
 
     try:
 

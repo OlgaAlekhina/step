@@ -81,7 +81,7 @@ class ArchiveContestsView(BaseContestView):
         access_token = get_token()
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
-        configs = get_configs(project_id, account_id, [])
+        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'contest_status_id'])
         if configs.get('data'):
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
@@ -127,7 +127,7 @@ class ActiveContestsView(BaseContestView):
         access_token = get_token()
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
-        configs = get_configs(project_id, account_id, [])
+        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'contest_status_id'])
         if configs.get('data'):
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
@@ -346,6 +346,11 @@ class UserTasksView(BaseContestView):
     @extend_schema(
         summary="Получение списка заданий пользователя",
         description="Получение списка всех заданий пользователя. Мои задания.",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
+
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -357,26 +362,45 @@ class UserTasksView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
-        user_id = request.auth.get('user_id')
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'contest_status_id'])
+
+        if configs.get('data'):
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+            acceptance_works_done = configs.get('data').get('contest_status_id').get('acceptance_works_done')
+            voting = configs.get('data').get('contest_status_id').get('voting')
+            sum_results = configs.get('data').get('contest_status_id').get('sum_results')
+            done = configs.get('data').get('contest_status_id').get('done')
+
+        else:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
+
+        # user_data = {'user_task_id': None, 'user_task_status': {'code': 'NOT_DEFINED', 'message': 'Не определен'}}
+        if request.auth:
+            user_id = request.auth.get('user_id')
+
         result_data = get_tasks(
             token=access_token,
-            process_id=process_contests_id,
-            # status_ids=None,
+            node_id=node_id,
+            process_id=contest_process_id,
             status_ids=(
-                settings.STATUS_ID_ACCEPTANCE_WORKS,
-                status_id_acceptance_works_done,
-                status_id_voting,
-                status_id_sum_results,
-                settings.STATUS_ID_DONE
+                acceptance_works,
+                acceptance_works_done,
+                voting,
+                sum_results,
+                done
             ),
-            # status_ids='Прием работ',  # Если передавать name а не id
             projects_ids=None,
             user_id=user_id,
-            # projects_ids='step',
-            # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Прием работ, Прием работ окончен, Голосование, "
                     "Подведение итогов, Завершен. Для раздела мои задания."
         )
+
         return Response(result_data[0], status=result_data[1])
 
 
@@ -400,21 +424,15 @@ class UserHistoryView(BaseContestView):
         access_token = get_token()
         if user_id is None:
             user_id = request.auth.get('user_id')
-        # def get(self, request):
-        #     access_token = get_token()
-        #     user_id = request.auth.get('user_id')
+
         result_data = get_history(
             token=access_token,
             process_id=process_contests_id,
-            # status_ids=None,
             status_ids=(
                 settings.STATUS_ID_DONE
             ),
-            # status_ids='Прием работ',  # Если передавать name а не id
             projects_ids=None,
             user_id=user_id,
-            # projects_ids='step',
-            # projects_ids=('step', 'start'),
             message="Получение списка всех конкурсов со статусом Завершен. Для раздела история участия."
         )
         return Response(result_data[0], status=result_data[1])
