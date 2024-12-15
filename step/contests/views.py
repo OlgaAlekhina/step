@@ -411,6 +411,10 @@ class UserHistoryView(BaseContestView):
     @extend_schema(
         summary="Получение списка завершенных конкурсов пользователя",
         description="Получение списка всех завершенных конкурсов, где пользователя участвовал. История участия.",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -422,14 +426,29 @@ class UserHistoryView(BaseContestView):
     )
     def get(self, request, user_id=None):
         access_token = get_token()
-        if user_id is None:
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id, ['node_id', 'contest_process_id', 'contest_status_id'])
+        if configs.get('data'):
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            done = configs.get('data').get('contest_status_id').get('done')
+        else:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
+
+        if user_id is None and request.auth:
             user_id = request.auth.get('user_id')
 
         result_data = get_history(
             token=access_token,
-            process_id=process_contests_id,
+            node_id=node_id,
+            process_id=contest_process_id,
+            task_process_id=task_process_id,
             status_ids=(
-                settings.STATUS_ID_DONE
+                done
             ),
             projects_ids=None,
             user_id=user_id,

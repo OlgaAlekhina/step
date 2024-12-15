@@ -677,7 +677,9 @@ def get_tasks(
 
 def get_history(
         token: str,
+        node_id: Union[str, None],
         process_id: str,
+        task_process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
         user_id: str,
@@ -686,7 +688,7 @@ def get_history(
     """Получение всех конкурсов, где участвовал пользователь и загрузил решение."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
 
     try:
 
@@ -694,12 +696,6 @@ def get_history(
             parameters_ids=status_ids,
             construction='AND status.id'
         )
-
-        # Если передавать name а не id
-        # status_condition = get_condition(
-        #     parameters_ids=status_ids,
-        #     construction='AND status.name'
-        # )
 
         project_condition = get_condition(
             parameters_ids=projects_ids,
@@ -725,11 +721,10 @@ def get_history(
 
             task = check_task(
                 url=url,
-                process_id=process_participation_contest_id,
+                process_id=task_process_id,
                 contest_id=contest.get('id'),
                 user_id=user_id,
                 status_condition=f"AND status.name = 'Задание выполнено'",
-                # f"AND status.id = '{status_id_task_completed}'",
                 headers=headers
             )
 
@@ -740,7 +735,7 @@ def get_history(
                 application_id = task.get('application_id')
                 attachments = get_attachments(token, application_id)
 
-                result_data.append(  # contest)
+                result_data.append(
                     {
                         'id': contest.get('id', None),
                         'title': contest.get('title', None),
