@@ -61,7 +61,7 @@ def create_config(config_data):
         result_data = {"detail": {
             "code": "OK",
             "message": "Идентификатор успешно создан."
-            },
+        },
             "data": response_data
         }
         return result_data, 201
@@ -115,7 +115,13 @@ def get_token():
         return token_cache['access_token']
 
 
-def get_user_task(token: str, contest_id: str, user_id: str, task_process_id: Union[str, None], node_id: Union[str, None]) -> dict:
+def get_user_task(
+        token: str,
+        contest_id: str,
+        user_id: str,
+        task_process_id: Union[str, None],
+        node_id: Union[str, None]
+) -> dict:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
     Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
@@ -381,6 +387,7 @@ def create_task(token, contest_id, user_id):
 
 def get_contests(
         token: str,
+        node_id: str,
         process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
@@ -389,7 +396,7 @@ def get_contests(
     """Получение всех конкурсов по переданным параметрам."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
 
     try:
 
@@ -397,12 +404,6 @@ def get_contests(
             parameters_ids=status_ids,
             construction='AND status.id'
         )
-
-        # Если передавать name а не id
-        # status_condition = get_condition(
-        #     parameters_ids=status_ids,
-        #     construction='AND status.name'
-        # )
 
         project_condition = get_condition(
             parameters_ids=projects_ids,

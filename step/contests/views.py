@@ -26,7 +26,7 @@ status_id_new = settings.STATUS_ID_NEW
 status_id_rejection = settings.STATUS_ID_REJECTION
 status_id_sum_results = settings.STATUS_ID_SUM_RESULTS
 status_id_voting = settings.STATUS_ID_VOTING
-status_id_acceptance_works = settings.STATUS_ID_ACCEPTANCE_WORKS
+# status_id_acceptance_works = settings.STATUS_ID_ACCEPTANCE_WORKS
 status_id_done = settings.STATUS_ID_DONE
 status_id_acceptance_works_done = settings.STATUS_ID_ACCEPTANCE_WORKS_DONE
 status_id_no_winner = settings.STATUS_ID_NO_WINNER
@@ -100,6 +100,10 @@ class ActiveContestsView(BaseContestView):
     @extend_schema(
         summary="Получение списка активных конкурсов",
         description="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы.",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
@@ -111,14 +115,25 @@ class ActiveContestsView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
+        project_id = request.META['HTTP_PROJECT_ID']
+        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        configs = get_configs(project_id, account_id, [])
+        if configs.get('data'):
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+
+        else:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
+
         result_data = get_contests(
             token=access_token,
-            process_id=process_contests_id,
+            node_id=node_id,
+            process_id=contest_process_id,
             status_ids=status_id_acceptance_works,
-            # status_ids='Прием работ',  # Если передавать name а не id
-            # projects_ids=None,
-            # projects_ids='step',
-            projects_ids=('step', 'start'),
+            projects_ids=None,
             message="Получение списка всех конкурсов со статусом Прием работ. Активные конкурсы."
         )
         return Response(result_data[0], status=result_data[1])
@@ -141,7 +156,6 @@ class ConfigsView(BaseContestView):
         },
         tags=['Configs']
     )
-
     def get(self, request, config_type):
         project_id = request.META['HTTP_PROJECT_ID']
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
@@ -151,6 +165,7 @@ class ConfigsView(BaseContestView):
 
 class CreateConfigView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
+
     @extend_schema(
         summary="Добавление идентификаторов в реестр",
         description="Добавление идентификаторов в реестр",
@@ -216,8 +231,9 @@ class ContestDetailsView(BaseContestView):
             task_process_id = configs.get('data').get('task_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
         else:
-            return Response({'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                            status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
         user_data = {'user_task_id': None, 'user_task_status': {'code': 'NOT_DEFINED', 'message': 'Не определен'}}
         # если запрос успешно прошел аутентификацию, получаем id пользователя
         if request.auth:
@@ -308,7 +324,7 @@ class UserTaskView(BaseContestView):
         response = {'detail': {
             "code": "BAD_REQUEST",
             "message": serializer.errors
-            }
+        }
         }
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
@@ -337,7 +353,7 @@ class UserTasksView(BaseContestView):
             process_id=process_contests_id,
             # status_ids=None,
             status_ids=(
-                status_id_acceptance_works,
+                settings.STATUS_ID_ACCEPTANCE_WORKS,
                 status_id_acceptance_works_done,
                 status_id_voting,
                 status_id_sum_results,
