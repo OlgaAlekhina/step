@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Union, Tuple, List, Dict
+from typing import Union, Tuple, List, Dict, Optional
 
 import requests
 from django.conf import settings
@@ -12,33 +12,18 @@ token_cache = {'access_token': None, 'last_update': 0}
 base_url = settings.BASE_URL
 username = settings.USERNAME
 password = settings.PASSWORD
-node_id_default = settings.NODE_ID
-
-process_participation_contest_id = settings.PROCESS_PARTICIPATION_CONTEST_ID
-
-process_contests_id = settings.PROCESS_CONTESTS_ID
-process_docontests_id = settings.PROCESS_DOCONTESTS_ID
-
-status_id_rejection = settings.STATUS_ID_REJECTION
-status_id_task_completed = settings.STATUS_ID_TASK_COMPLETED
-status_id_task_new = settings.STATUS_ID_TASK_NEW
-
-jwt_public_key = settings.ACCESS_TOKEN_PUBLIC_KEY
-jwt_algorithm = settings.JWT_ALGORITHM
-
-#   Статус конкурса
-status_id_done = settings.STATUS_ID_DONE
 
 
-def get_configs(project_id: str, account_id: Union[str, None], configs: List[str]) -> Dict:
+def get_configs(project_id: str, account_id: Optional[str], configs: List[str]) -> Optional[Dict]:
     """
     Получить из реестра значения конфигов типа config для данных project_id и account_id
     """
     object_types = ','.join(configs)
+    beginning_url = "http://127.0.0.1:8002/api/configs"
     if account_id:
-        url = f"http://127.0.0.1:8002/api/configs/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
+        url = f"{beginning_url}/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
     else:
-        url = f"http://127.0.0.1:8002/api/configs/?project_id={project_id}&object_type={object_types}"
+        url = f"{beginning_url}/?project_id={project_id}&object_type={object_types}"
     response = requests.get(url)
     if response.status_code == 200:
         response_data = response.json()
@@ -174,7 +159,7 @@ def get_user_task(
         return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}
 
 
-def datetime_convert(date, format_date='%d.%m.%Y') -> str | None:
+def datetime_convert(date, format_date='%d.%m.%Y') -> Optional[str]:
     """Преобразование даты в заданный формат."""
 
     if date is None or not date:
@@ -195,7 +180,7 @@ def get_condition(parameters_ids: Union[Tuple[str, ...], List[str], str, None], 
     return parameter_condition
 
 
-def get_contest(token: str, contest_id: str, node_id: Union[str, None]) -> Tuple[Dict, int] | list:
+def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Dict, int] | list:
     """Получение данных одного конкурса по его id."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
@@ -244,7 +229,13 @@ def get_contest(token: str, contest_id: str, node_id: Union[str, None]) -> Tuple
         return result_data, response.status_code
 
 
-def patch_task(token: str, task_id: str, node_id: str, task_process_id: str, task_status_rejection: str) -> Tuple[Dict, int] | None:
+def patch_task(
+        token: str,
+        task_id: str,
+        node_id: str,
+        task_process_id: str,
+        task_status_rejection: str
+) -> Tuple[Dict, int] | None:
     """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
     access_token = token
     # проверяем, что есть такая заявка на участие в конкурсе
@@ -387,7 +378,7 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
 
 def get_contests(
         token: str,
-        node_id: Union[str, None],
+        node_id: Optional[str],
         process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
@@ -502,10 +493,11 @@ def check_task(
         user_id: str,
         status_condition: str,
         headers: Dict
-) -> Union[Dict, None]:
+) -> Optional[Dict]:
     """Функция для проверки есть ли у данного конкурса задача с текущим пользователем или нет."""
     tasks = {
-        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}' {status_condition}"
+        "rql": f"process.id = '{process_id}' AND cf_konkurs_id = '{contest_id}' "
+               f"AND cf_userid = '{user_id}' {status_condition}"
     }
     response = requests.post(url, json=tasks, headers=headers)
     result = response.json().get('data', [])
@@ -547,7 +539,9 @@ def get_tasks(
         token: str,
         node_id: str,
         process_id: str,
+        process_task_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
+        task_status_id_rejection: str,
         projects_ids: Union[Tuple[str, ...], List[str], str, None],
         user_id: str,
         message: str = "Список всех конкурсов/задач по заданному статусу или статусам"
@@ -563,12 +557,6 @@ def get_tasks(
             parameters_ids=status_ids,
             construction='AND status.id'
         )
-
-        # Если передавать name а не id
-        # status_condition = get_condition(
-        #     parameters_ids=status_ids,
-        #     construction='AND status.name'
-        # )
 
         project_condition = get_condition(
             parameters_ids=projects_ids,
@@ -596,16 +584,15 @@ def get_tasks(
         response.raise_for_status()  # Это вызовет исключение для статусов 4xx и 5xx
 
         response_data = response.json().get('data', [])
-        # result_data = response_data
         result_data = []
         for contest in response_data:
 
             task = check_task(
                 url=url,
-                process_id=process_participation_contest_id,
+                process_id=process_task_id,
                 contest_id=contest.get('id'),
                 user_id=user_id,
-                status_condition=f"AND status.id != '{status_id_rejection}'",
+                status_condition=f"AND status.id != '{task_status_id_rejection}'",
                 headers=headers
             )
 
@@ -677,7 +664,7 @@ def get_tasks(
 
 def get_history(
         token: str,
-        node_id: Union[str, None],
+        node_id: Optional[str],
         process_id: str,
         task_process_id: str,
         status_ids: Union[Tuple[str, ...], List[str], str, None],
@@ -784,6 +771,7 @@ def get_history(
 
 def get_contest_tasks(
         token: str,
+        node_id: Optional[str],
         process_id: str,
         contest_id: str,
         task_status: Union[Tuple[str, ...], List[str], str, None] = None,
@@ -792,7 +780,7 @@ def get_contest_tasks(
     """Получение всех задач по переданному/ым конкурса, статусу/ам."""
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id_default}"
+    url = f"{base_url}/api/tasks/rql/{node_id}"
 
     try:
 
