@@ -403,7 +403,7 @@ class UserTasksView(BaseContestView):
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
-            configs=['node_id', 'contest_process_id', 'contest_status_id', 'task_status_id']
+            configs=['node_id', 'contest_process_id', 'contest_status_id', 'task_status_id', 'task_process_id']
         )
 
         if configs.get('data'):
@@ -533,7 +533,7 @@ class ContestTasksView(BaseContestView):
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
-            configs=['node_id', 'task_process_id']
+            configs=['node_id', 'task_process_id', 'task_status_id']
         )
         if configs.get('data'):
             node_id = configs.get('data').get('node_id').get('value')

@@ -90,6 +90,10 @@ BASE_URL = str(os.getenv('BASE_URL'))
 USERNAME = str(os.getenv('USER_RAIDA'))
 PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 
+# Для расшифровки JWT-токенов
+ACCESS_TOKEN_PUBLIC_KEY = os.getenv('ACCESS_TOKEN_PUBLIC_KEY')
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
+
 WSGI_APPLICATION = 'step.wsgi.application'
 
 # Database
