@@ -15,7 +15,7 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
 
 class HeadersSerializer(serializers.Serializer):
     project_id = serializers.UUIDField()
-    account_id = serializers.UUIDField(required=False)
+    account_id = serializers.UUIDField(allow_null=True)
 
 
 class CreateConfigSerializer(serializers.Serializer):

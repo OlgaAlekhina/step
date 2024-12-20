@@ -66,9 +66,6 @@ class ArchiveContestsView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
-        # if not project_id:
-        #     return Response({'detail': dict(code='PROJECT-ID_EMPTY', message='Отсутствует обязательный заголовок ProjectID.')},
-        #         status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
