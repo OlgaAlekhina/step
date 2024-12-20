@@ -61,8 +61,11 @@ class ArchiveContestsView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID']
+        project_id = request.META['HTTP_PROJECT_ID'] if 'HTTP_PROJECT_ID' in request.META else None
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        if not project_id:
+            return Response({'detail': dict(code='PROJECT-ID_EMPTY', message='Отсутствует обязательный заголовок ProjectID.')},
+                status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
