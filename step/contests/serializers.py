@@ -13,6 +13,11 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
     return result
 
 
+class HeadersSerializer(serializers.Serializer):
+    project_id = serializers.UUIDField()
+    account_id = serializers.UUIDField(required=False)
+
+
 class CreateConfigSerializer(serializers.Serializer):
     project_id = serializers.UUIDField()
     account_id = serializers.UUIDField(required=False)

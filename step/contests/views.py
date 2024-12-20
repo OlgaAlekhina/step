@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
-                          CreateConfigSerializer)
+                          CreateConfigSerializer, HeadersSerializer)
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
                        get_history, contest_exists, create_task, get_contest_tasks, get_configs, create_config)
 
@@ -63,9 +63,12 @@ class ArchiveContestsView(BaseContestView):
         access_token = get_token()
         project_id = request.META['HTTP_PROJECT_ID'] if 'HTTP_PROJECT_ID' in request.META else None
         account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
-        if not project_id:
-            return Response({'detail': dict(code='PROJECT-ID_EMPTY', message='Отсутствует обязательный заголовок ProjectID.')},
-                status=status.HTTP_401_UNAUTHORIZED)
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # if not project_id:
+        #     return Response({'detail': dict(code='PROJECT-ID_EMPTY', message='Отсутствует обязательный заголовок ProjectID.')},
+        #         status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
