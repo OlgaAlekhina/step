@@ -61,8 +61,8 @@ class ArchiveContestsView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID'] if 'HTTP_PROJECT_ID' in request.META else None
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
