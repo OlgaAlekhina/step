@@ -14,11 +14,13 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
 
 
 class HeadersSerializer(serializers.Serializer):
+    """Сериализатор для валидации заголовков Project-ID и Account-ID """
     project_id = serializers.UUIDField()
     account_id = serializers.UUIDField(allow_null=True)
 
 
 class CreateConfigSerializer(serializers.Serializer):
+    """Сериализатор для создания конфигов """
     project_id = serializers.UUIDField()
     account_id = serializers.UUIDField(required=False)
     object_type = serializers.CharField()

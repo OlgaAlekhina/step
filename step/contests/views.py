@@ -114,8 +114,11 @@ class ActiveContestsView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -160,8 +163,11 @@ class ConfigsView(BaseContestView):
         tags=['Configs']
     )
     def get(self, request, config_type):
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         response_data = get_configs(project_id=project_id, account_id=account_id, configs=[config_type])
         return Response(response_data)
 
@@ -227,8 +233,11 @@ class ContestDetailsView(BaseContestView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -279,8 +288,11 @@ class QuitContestView(BaseContestView):
         tags=['Contests']
     )
     def delete(self, request, task_id):
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -327,8 +339,11 @@ class UserTaskView(BaseContestView):
         tags=['Contests']
     )
     def post(self, request):
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -401,8 +416,11 @@ class UserTasksView(BaseContestView):
     )
     def get(self, request):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -472,8 +490,11 @@ class UserHistoryView(BaseContestView):
     )
     def get(self, request, user_id=None):
         access_token = get_token()
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -530,9 +551,11 @@ class ContestTasksView(BaseContestView):
     )
     def get(self, request, contest_id):
         access_token = get_token()
-
-        project_id = request.META['HTTP_PROJECT_ID']
-        account_id = request.META['HTTP_ACCOUNT_ID'] if 'HTTP_ACCOUNT_ID' in request.META else None
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
