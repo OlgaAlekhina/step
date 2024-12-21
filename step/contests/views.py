@@ -146,9 +146,10 @@ class ActiveContestsView(BaseContestView):
 
 
 class ConfigsView(BaseContestView):
+    permission_classes = [permissions.IsAuthenticated]
     @extend_schema(
-        summary="Получение идентификаторов из реестра",
-        description="Получение идентификаторов из реестра",
+        summary="Получение идентификаторов типа {config_type} из реестра",
+        description="Получение идентификаторов типа {config_type} из реестра",
         parameters=[
             OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
             OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
@@ -169,11 +170,43 @@ class ConfigsView(BaseContestView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
         response_data = get_configs(project_id=project_id, account_id=account_id, configs=[config_type])
+        if not response_data.get('data'):
+            return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
+                            status=status.HTTP_404_NOT_FOUND)
         return Response(response_data)
 
 
 class CreateConfigView(BaseContestView):
     permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Получение всех идентификаторов из реестра",
+        description="Получение всех идентификаторов из реестра",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Successful Response",
+                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Configs']
+    )
+    def get(self, request):
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        response_data = get_configs(project_id=project_id, account_id=account_id, configs=[])
+        if not response_data.get('data'):
+            return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
+                            status=status.HTTP_404_NOT_FOUND)
+        return Response(response_data)
+
 
     @extend_schema(
         summary="Добавление идентификаторов в реестр",
