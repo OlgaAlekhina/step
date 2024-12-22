@@ -11,7 +11,7 @@ run_tests:
   stage: run_tests
   tags:
     - docker
-  image: python:3.10.16-slim
+  image: python:3.10-slim
   before_script:
     - cp "$ENVS_TEST" .env 
     - apt-get update && apt-get install make
