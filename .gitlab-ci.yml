@@ -25,45 +25,45 @@ run_tests:
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
 
-build_image:
-  stage: build
-  tags:
-   - docker
-  image: docker:27.3.1
-  services:
-   - docker:27.3.1-dind
-  variables:
-   DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-   - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
-  script:
-   - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-   - docker push $IMAGE_NAME:$IMAGE_TAG
-  rules:
-   - if: $CI_COMMIT_BRANCH == "master"
+# build_image:
+#   stage: build
+#   tags:
+#    - docker
+#   image: docker:27.3.1
+#   services:
+#    - docker:27.3.1-dind
+#   variables:
+#    DOCKER_TLS_CERTDIR: "/certs"
+#   before_script:
+#    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+#   script:
+#    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+#    - docker push $IMAGE_NAME:$IMAGE_TAG
+#   rules:
+#    - if: $CI_COMMIT_BRANCH == "master"
 
-deploy:
-  stage: deploy
-  tags:
-    - docker
-  image: alpine:3.18
-  before_script:
-    - eval $(ssh-agent -s)
-    - mkdir -p ~/.ssh
-    - chmod -R 700 ~/.ssh
-    - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp1 && chmod 700 ~/.ssh/tmp1
-    - echo 'echo $SSH_PASSPHRASE_TEST' > ~/.ssh/tmp2 && chmod 700 ~/.ssh/tmp2
-    - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp1 ssh-add -
-    - echo "$SSH_PRIVATE_KEY_TEST" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp2 ssh-add -
-    - cp "$SSH_CONFIG" ~/.ssh/config 
+# deploy:
+#   stage: deploy
+#   tags:
+#     - docker
+#   image: alpine:3.18
+#   before_script:
+#     - eval $(ssh-agent -s)
+#     - mkdir -p ~/.ssh
+#     - chmod -R 700 ~/.ssh
+#     - echo 'echo $SSH_PASSPHRASE_GATE' > ~/.ssh/tmp1 && chmod 700 ~/.ssh/tmp1
+#     - echo 'echo $SSH_PASSPHRASE_TEST' > ~/.ssh/tmp2 && chmod 700 ~/.ssh/tmp2
+#     - echo "$SSH_PRIVATE_KEY_GATE" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp1 ssh-add -
+#     - echo "$SSH_PRIVATE_KEY_TEST" | tr -d '\r' | DISPLAY=None SSH_ASKPASS=~/.ssh/tmp2 ssh-add -
+#     - cp "$SSH_CONFIG" ~/.ssh/config 
    
-  script:
-    - echo "Deploying backend"
-    - ssh cloveri.host "cd /home/devops/backend &&
-        docker-compose down &&
-        docker rmi $IMAGE_NAME:$IMAGE_TAG &&
-        docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
-        docker pull $IMAGE_NAME:$IMAGE_TAG &&
-        docker-compose up -d"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "master"
+#   script:
+#     - echo "Deploying backend"
+#     - ssh cloveri.host "cd /home/devops/backend &&
+#         docker-compose down &&
+#         docker rmi $IMAGE_NAME:$IMAGE_TAG &&
+#         docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
+#         docker pull $IMAGE_NAME:$IMAGE_TAG &&
+#         docker-compose up -d"
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "master"
