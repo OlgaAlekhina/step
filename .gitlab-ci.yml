@@ -19,6 +19,7 @@ run_tests:
     # - apt-get update && apt-get install make
   script:
     - docker pull olgaalekhina/configs_registry:sqlite
+    - docker images
     - docker run --network=host configs_registry:sqlite
     - curl -X 'GET' 'http://127.0.0.1:8002/api/configs/'
     # - make run_tests
