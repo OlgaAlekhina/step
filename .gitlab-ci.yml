@@ -8,13 +8,11 @@ variables:
 
 stages:
   - run_tests
-  - build
+  # - build
   - deploy
 
 run_tests:
   stage: run_tests
-  # tags:
-  #   - docker
   image: python:3.10-slim
   before_script:
     # - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
@@ -31,30 +29,26 @@ run_tests:
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
 
-build_image:
-  stage: build
-  # tags:
-  #  - docker
-  image: docker:27.3.1
-  services:
-   - docker:27.3.1-dind
-  variables:
-   DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-   - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
-  script:
-  #  - unset DOCKER_HOST
-   - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-   - docker push $IMAGE_NAME:$IMAGE_TAG
-  rules:
-   - if: $CI_COMMIT_BRANCH == "master"
+# build_image:
+#   stage: build
+#   image: docker:27.3.1
+#   services:
+#    - docker:27.3.1-dind
+#   variables:
+#    DOCKER_TLS_CERTDIR: "/certs"
+#   before_script:
+#    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+#   script:
+#    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+#    - docker push $IMAGE_NAME:$IMAGE_TAG
+#   rules:
+#    - if: $CI_COMMIT_BRANCH == "master"
 
 deploy:
   stage: deploy
-  # tags:
-  #   - docker
   image: alpine:3.18
   before_script:
+    - apk update && apk add openssh-client gettext
     - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
