@@ -35,9 +35,12 @@ build_image:
   stage: build
   # tags:
   #  - docker
-  image: docker:27.3.1
+  # image: docker:27.3.1
+  # services:
+  #  - docker:27.3.1-dind
+  image: docker:24.0.7
   services:
-   - docker:27.3.1-dind
+    - docker:dind
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
