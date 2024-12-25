@@ -29,7 +29,7 @@ run_tests:
     - echo 'testing configs'
     - docker pull olgaalekhina/configs_registry:sqlite
     - docker images
-    - docker run --network=host olgaalekhina/configs_registry:sqlite
+    - docker run -d --network=host olgaalekhina/configs_registry:sqlite
     - curl -X 'GET' 'http://127.0.0.1:8002/api/configs/'
     # - make run_tests
   rules:
