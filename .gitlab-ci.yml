@@ -14,20 +14,19 @@ stages:
 run_tests:
   stage: run_tests
   tags:
-    - docker
+    - step_runner
   image: python:3.10-slim
   before_script:
-    - cat /etc/os-release
-    # - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
     # - pip install -r requirements.txt
     - cp "$ENVS_TEST" .env 
     # - apt-get update && apt-get install make
   script:
-    - echo 'just testing new runner'
-    # - docker pull olgaalekhina/configs_registry:sqlite
+    - echo 'testing configs'
+    - docker pull olgaalekhina/configs_registry:sqlite
     # - docker images
-    # - docker run --network=host configs_registry:sqlite
-    # - curl -X 'GET' 'http://127.0.0.1:8002/api/configs/'
+    - docker run --network=host configs_registry:sqlite
+    - curl -X 'GET' 'http://127.0.0.1:8002/api/configs/'
     # - make run_tests
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
@@ -51,10 +50,10 @@ deploy:
   stage: deploy
   tags:
     - step_runner
-  image: alpine:3.18
+  image: ubuntu:18.04
   before_script:
     - apk update && apk add openssh-client gettext
-    - apk update && apk add bash
+    # - apk update && apk add bash
     - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
