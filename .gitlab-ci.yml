@@ -1,6 +1,6 @@
-default:
-  tags:
-    - step_runner
+# default:
+#   tags:
+#     - step_runner
 
 variables:
   IMAGE_NAME: olgaalekhina/step
@@ -13,14 +13,17 @@ stages:
 
 run_tests:
   stage: run_tests
+  tags:
+    - docker
   image: python:3.10-slim
   before_script:
+    - cat /etc/os-release
     # - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
     # - pip install -r requirements.txt
     - cp "$ENVS_TEST" .env 
     # - apt-get update && apt-get install make
   script:
-    - echo 'just testing new running'
+    - echo 'just testing new runner'
     # - docker pull olgaalekhina/configs_registry:sqlite
     # - docker images
     # - docker run --network=host configs_registry:sqlite
@@ -46,9 +49,12 @@ run_tests:
 
 deploy:
   stage: deploy
+  tags:
+    - step_runner
   image: alpine:3.18
   before_script:
     - apk update && apk add openssh-client gettext
+    - apk update && apk add bash
     - eval $(ssh-agent -s)
     - mkdir -p ~/.ssh
     - chmod -R 700 ~/.ssh
