@@ -30,9 +30,9 @@ run_tests:
     - docker pull $IMAGE_NAME:$IMAGE_TAG
     - docker run -d --network=host olgaalekhina/configs_registry:sqlite
     - docker run -d --name=step_app --env-file ./.env --network=host $IMAGE_NAME:$IMAGE_TAG
-    - docker exec -t -i step_app bash
-    - ls -a
-    - pytest step/contests/tests
+    - docker exec step_app pytest step/contests/tests
+    # - ls -a
+    # - pytest step/contests/tests
     - exit
     - docker stop $(docker ps -a -q)
     - docker rm $(docker ps -a -q)
