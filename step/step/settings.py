@@ -94,6 +94,8 @@ PASSWORD = str(os.getenv('PASSWD_RAIDA'))
 ACCESS_TOKEN_PUBLIC_KEY = os.getenv('ACCESS_TOKEN_PUBLIC_KEY')
 JWT_ALGORITHM = os.getenv('JWT_ALGORITHM')
 
+CONFIGS_SERVICE_URL = os.getenv('CONFIGS_SERVICE_URL')
+
 WSGI_APPLICATION = 'step.wsgi.application'
 
 # Database

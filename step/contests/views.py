@@ -10,7 +10,7 @@ from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, Contest
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
                           CreateConfigSerializer, HeadersSerializer)
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
-                       get_history, contest_exists, create_task, get_contest_tasks, get_configs, create_config)
+                       get_history, contest_exists, create_task, get_contest_tasks, get_configs)
 
 
 class BaseContestView(APIView):
@@ -41,6 +41,7 @@ class BaseContestView(APIView):
 
 
 class ArchiveContestsView(BaseContestView):
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
 
     @extend_schema(
@@ -66,21 +67,27 @@ class ArchiveContestsView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'contest_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             status_id_done = configs.get('data').get('contest_status_id').get('done')
             status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
-
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -94,6 +101,7 @@ class ArchiveContestsView(BaseContestView):
 
 
 class ActiveContestsView(BaseContestView):
+    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser]
 
     @extend_schema(
@@ -119,21 +127,26 @@ class ActiveContestsView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'contest_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
-
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
-
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -145,108 +158,8 @@ class ActiveContestsView(BaseContestView):
         return Response(result_data[0], status=result_data[1])
 
 
-class ConfigsView(BaseContestView):
-    permission_classes = [permissions.IsAuthenticated]
-    @extend_schema(
-        summary="Получение идентификаторов типа {config_type} из реестра",
-        description="Получение идентификаторов типа {config_type} из реестра",
-        parameters=[
-            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
-            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
-        ],
-        responses={
-            200: OpenApiResponse(
-                description="Successful Response",
-                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
-            ),
-            **BaseContestView.COMMON_RESPONSES
-        },
-        tags=['Configs']
-    )
-    def get(self, request, config_type):
-        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
-        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
-        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
-        response_data = get_configs(project_id=project_id, account_id=account_id, configs=[config_type])
-        if not response_data.get('data'):
-            return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
-                            status=status.HTTP_404_NOT_FOUND)
-        return Response(response_data)
-
-
-class CreateConfigView(BaseContestView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @extend_schema(
-        summary="Получение всех идентификаторов из реестра",
-        description="Получение всех идентификаторов из реестра",
-        parameters=[
-            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
-            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
-        ],
-        responses={
-            200: OpenApiResponse(
-                description="Successful Response",
-                response=inline_serializer(name='Configs', fields={'data': serializers.JSONField()})
-            ),
-            **BaseContestView.COMMON_RESPONSES
-        },
-        tags=['Configs']
-    )
-    def get(self, request):
-        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
-        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
-        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
-        response_data = get_configs(project_id=project_id, account_id=account_id, configs=[])
-        if not response_data.get('data'):
-            return Response({'detail': dict(code='NOT_FOUND', message='Конфиги не найдены.')},
-                            status=status.HTTP_404_NOT_FOUND)
-        return Response(response_data)
-
-
-    @extend_schema(
-        summary="Добавление идентификаторов в реестр",
-        description="Добавление идентификаторов в реестр",
-        request=CreateConfigSerializer,
-        responses={
-            201: OpenApiResponse(
-                description="Successful Response",
-                # response=
-            ),
-            **BaseContestView.COMMON_RESPONSES
-        },
-        tags=['Configs']
-    )
-    def post(self, request):
-        request_data = request.data
-        serializer = CreateConfigSerializer(data=request_data)
-        if serializer.is_valid():
-            project_id = serializer.validated_data['project_id']
-            account_id = serializer.validated_data['account_id'] if 'account_id' in serializer.validated_data else ''
-            object_type = serializer.validated_data['object_type']
-            data = serializer.validated_data['data']
-            config_data = {
-                "project_id": str(project_id),
-                "account_id": str(account_id) if account_id else None,
-                "user_id": request.auth.get('user_id'),
-                "object_type": object_type,
-                "object_code": f"{project_id}:{account_id}:{object_type}",
-                # "object_item": serializer.validated_data['object_item'],
-                # "name": serializer.validated_data['name'],
-                "data": data
-            }
-            response_data = create_config(config_data)
-            return Response(response_data[0], response_data[1])
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class ContestDetailsView(BaseContestView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
         summary="Получение конкретного конкурса",
@@ -271,26 +184,30 @@ class ContestDetailsView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['task_process_id', 'node_id', 'task_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             task_process_id = configs.get('data').get('task_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
             task_status_id = configs.get('data').get('task_status_id')
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
-        user_data = {'user_task_id': None, 'user_task_status': {'code': 'NOT_DEFINED', 'message': 'Не определен'}}
-        # если запрос успешно прошел аутентификацию, получаем id пользователя
-        if request.auth:
-            user_id = request.auth.get('user_id')
-            # проверяем, отправил пользователь решение или нет
-            result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
-            user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user_id = request.auth.get('user_id')
+        # проверяем, отправил пользователь решение или нет
+        result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
+        user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
         contest_data = get_contest(access_token, contest_id, node_id)
         if not contest_data:
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
@@ -326,19 +243,26 @@ class QuitContestView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             task_process_id = configs.get('data').get('task_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
             task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         access_token = get_token()
         response_data = patch_task(access_token, task_id, node_id, task_process_id, task_status_rejection)
         if not response_data:
@@ -377,21 +301,28 @@ class UserTaskView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             task_process_id = configs.get('data').get('task_process_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
             task_status_id = configs.get('data').get('task_status_id')
             task_status_new = configs.get('data').get('task_status_id').get('new')
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         user_id = request.auth.get('user_id')
         serializer = CreateTaskSerializer(data=request.data)
         if serializer.is_valid():
@@ -454,13 +385,16 @@ class UserTasksView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'contest_status_id', 'task_status_id', 'task_process_id']
         )
 
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             process_task_id = configs.get('data').get('task_process_id').get('value')
@@ -470,12 +404,14 @@ class UserTasksView(BaseContestView):
             sum_results = configs.get('data').get('contest_status_id').get('sum_results')
             done = configs.get('data').get('contest_status_id').get('done')
             task_status_id_rejection = configs.get('data').get('task_status_id').get('rejection')
-
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
-
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         if request.auth:
             user_id = request.auth.get('user_id')
 
@@ -528,21 +464,27 @@ class UserHistoryView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'task_process_id', 'contest_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             node_id = configs.get('data').get('node_id').get('value')
             contest_process_id = configs.get('data').get('contest_process_id').get('value')
             task_process_id = configs.get('data').get('task_process_id').get('value')
             done = configs.get('data').get('contest_status_id').get('done')
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
-
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         if user_id is None and request.auth:
             user_id = request.auth.get('user_id')
 
@@ -589,22 +531,27 @@ class ContestTasksView(BaseContestView):
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
+            auth_token=auth_token,
             configs=['node_id', 'task_process_id', 'task_status_id']
         )
-        if configs.get('data'):
+        if configs[1] == 200:
+            configs = configs[0]
             node_id = configs.get('data').get('node_id').get('value')
             task_process_id = configs.get('data').get('task_process_id').get('value')
             status_id_task_approved = configs.get('data').get('task_status_id').get('approved')
             status_id_task_completed = configs.get('data').get('task_status_id').get('completed')
-
-        else:
+        elif configs[1] == 400:
             return Response(
                 {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
                 status=status.HTTP_401_UNAUTHORIZED)
-
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         status_ids = request.query_params.getlist('status')
 
         if not status_ids:

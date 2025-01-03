@@ -12,62 +12,23 @@ token_cache = {'access_token': None, 'last_update': 0}
 base_url = settings.BASE_URL
 username = settings.USERNAME
 password = settings.PASSWORD
+configs_url = settings.CONFIGS_SERVICE_URL
 
-
-def get_configs(project_id: str, account_id: Optional[str], configs: List[str]) -> Optional[Dict]:
+def get_configs(project_id: str, account_id: Optional[str], auth_token: str, configs: List[str]) -> Tuple[Dict, int]:
     """
-    Получить из реестра значения конфигов типа config для данных project_id и account_id
+    Получить из сервиса конфигов значения конфигов типа config для данных project_id и account_id
     """
-    object_types = ','.join(configs)
-    beginning_url = "http://127.0.0.1:8002/api/configs"
-    if account_id:
-        url = f"{beginning_url}/?project_id={project_id}&account_id={account_id}&object_type={object_types}"
-    else:
-        url = f"{beginning_url}/?project_id={project_id}&object_type={object_types}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        response_data = response.json()
-        results = {}
-        for result in response_data:
-            results.update({
-                result.get('object_type'): result.get('data')
-            })
-        return {'data': results}
-    return None
-
-
-def create_config(config_data):
-    print('configs_data', config_data)
-    url = "http://127.0.0.1:8002/api/config/"
+    configs_types = ','.join(configs)
+    url = f"{configs_url}/configs/{configs_types}"
+    headers = {'Project-ID': project_id, 'Account-ID': account_id, 'Authorization': auth_token}
     try:
-        response = requests.post(url, json=config_data)
-        response.raise_for_status()
-        response_data = response.json()
-        result_data = {"detail": {
-            "code": "OK",
-            "message": "Идентификатор успешно создан."
-        },
-            "data": response_data
-        }
-        return result_data, 201
-
-    except HTTPError as http_err:
-        result_data = {
-            "detail": {
-                "code": "BAD_REQUEST",
-                "message": "Идентификатор такого типа уже существует"
-            }
-        }
-        return result_data, response.status_code
-
-    except RequestException as err:
-        result_data = {
-            "detail": {
-                "code": f"REQUEST_ERROR - {response.status_code}",
-                "message": str(err)
-            }
-        }
-        return result_data, response.status_code
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            response_data = response.json()
+            return response_data, 200
+        return {}, 400
+    except:
+        return {}, 500
 
 
 def get_token():
