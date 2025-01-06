@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from dataclasses import dataclass
 from datetime import datetime
-import uuid
 
 
 def datetime_convert(date, format_date='%d.%m.%Y'):
@@ -17,16 +16,6 @@ class HeadersSerializer(serializers.Serializer):
     """Сериализатор для валидации заголовков Project-ID и Account-ID """
     project_id = serializers.UUIDField()
     account_id = serializers.UUIDField(allow_null=True)
-
-
-class CreateConfigSerializer(serializers.Serializer):
-    """Сериализатор для создания конфигов """
-    project_id = serializers.UUIDField()
-    account_id = serializers.UUIDField(required=False)
-    object_type = serializers.CharField()
-    # object_item = serializers.UUIDField()
-    # name = serializers.CharField()
-    data = serializers.JSONField()
 
 
 class CreateTaskSerializer(serializers.Serializer):
@@ -277,3 +266,12 @@ class GetContestTasksListSerializer(serializers.Serializer):
     detail = DetailSerializer()
     data = ContestTasksSerializer(many=True)
     info = InfoSerializer()
+
+
+class SolutionSerializer(serializers.Serializer):
+    """ Сериализатор для отсылки решения на конкурс """
+    task_id = serializers.UUIDField()
+    solution_link = serializers.CharField(required=False)
+    solution_file = serializers.FileField()
+    comments = serializers.CharField(required=False)
+

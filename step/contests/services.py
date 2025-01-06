@@ -61,6 +61,43 @@ def get_token():
         return token_cache['access_token']
 
 
+def task_solution_status(token: str, task_id: str, user_id: str, task_process_id: str, node_id: str, task_status_id: dict) -> dict:
+    """ Проверяет наличие заявки на конкурс и ее статус """
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/rql/{node_id}"
+    try:
+        response = requests.post(url, headers=headers, json={
+            "rql": f"process.id = '{task_process_id}' AND id = '{task_id}' AND cf_userid = '{user_id}'",
+            "fields": []})
+        response.raise_for_status()
+        response_data = response.json().get('data', [])
+        if response_data:
+            for response in response_data:
+                status_new = task_status_id.get('new')
+                status_approved = task_status_id.get('approved')
+                status_completed = task_status_id.get('completed')
+                status = response.get('status').get('id')
+                if status == status_completed:
+                    task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение уже отправлено'}
+                    break
+                elif status in (status_new, status_approved):
+                    task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
+                    break
+            else:
+                task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
+        else:
+            task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
+
+        return task_status
+
+    except requests.exceptions.HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
+
+    except requests.exceptions.RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
+
+
 def get_user_task(
         token: str,
         contest_id: str,
@@ -81,6 +118,7 @@ def get_user_task(
         response = requests.post(url, headers=headers, json={
             "rql": f"process.id = '{task_process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
             "fields": []})
+        response.raise_for_status()
         response_data = response.json().get('data', [])
         if response_data:
             for response in response_data:
@@ -204,6 +242,7 @@ def patch_task(
     url = f"{base_url}/api/tasks/{node_id}/{task_id}"
     try:
         response = requests.get(url, headers=headers)
+        response.raise_for_status()
         response_data = response.json().get('data', [])
         # Если заявка есть, меняем статус
         if response_data and response_data.get('process').get('id') == task_process_id:
@@ -299,6 +338,7 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
     }
     try:
         response = requests.post(url, json=task, headers=headers)
+        response.raise_for_status()
         response_data = response.json().get('data')
         result_data = {
             "task_id": response_data.get('id', None),

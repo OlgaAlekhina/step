@@ -8,9 +8,9 @@ from rest_framework.views import APIView
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
-                          CreateConfigSerializer, HeadersSerializer)
+                          HeadersSerializer, SolutionSerializer)
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, patch_task,
-                       get_history, contest_exists, create_task, get_contest_tasks, get_configs)
+                       get_history, contest_exists, create_task, get_contest_tasks, get_configs, task_solution_status)
 
 
 class BaseContestView(APIView):
@@ -349,6 +349,77 @@ class UserTaskView(BaseContestView):
                     return Response(new_contest, status=status.HTTP_201_CREATED)
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
+        response = {'detail': {
+            "code": "BAD_REQUEST",
+            "message": serializer.errors
+        }
+        }
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SolutionView(BaseContestView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Отправить решение на конкурс",
+        description="Отправить решение на конкурс",
+        parameters=[
+            OpenApiParameter('Project-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER, required=True),
+            OpenApiParameter('Account-ID', OpenApiTypes.UUID, OpenApiParameter.HEADER)
+        ],
+        request=SolutionSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="Successful Response",
+                response=TaskResponseSerializer()
+            ),
+            409: OpenApiResponse(
+                description="Объект уже существует",
+                response=ErrorResponseSerializer()
+            ),
+            **BaseContestView.COMMON_RESPONSES
+        },
+        tags=['Contests']
+    )
+    def post(self, request):
+        project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
+        account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        auth_token = request.META.get('HTTP_AUTHORIZATION')
+        configs = get_configs(
+            project_id=project_id,
+            account_id=account_id,
+            auth_token=auth_token,
+            configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
+        )
+        if configs[1] == 200:
+            configs = configs[0]
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
+            task_status_new = configs.get('data').get('task_status_id').get('new')
+        elif configs[1] == 400:
+            return Response(
+                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
+                status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response(
+                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        user_id = request.auth.get('user_id')
+        serializer = SolutionSerializer(data=request.data)
+        if serializer.is_valid():
+            task_id = serializer.validated_data['task_id']
+            access_token = get_token()
+            task_status = task_solution_status(access_token, task_id, user_id, task_process_id, node_id, task_status_id)
+            if task_status.get('code') == 'TASK_UNCOMPLETED':
+                pass
+            elif task_status.get('code') in ('TASK_COMPLETED', 'TASK_DOES_NOT_EXIST'):
+                return Response(data=task_status, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data=task_status, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         response = {'detail': {
             "code": "BAD_REQUEST",
             "message": serializer.errors
