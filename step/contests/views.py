@@ -179,22 +179,27 @@ class ContestDetailsView(BaseContestView):
         tags=['Contests']
     )
     def get(self, request, contest_id):
+        # получаем токен для доступа к Райде
         access_token = get_token()
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем токен из заголовков для авторизации в сервисе конфигов
         auth_token = request.META.get('HTTP_AUTHORIZATION')
+        # получаем конфиги из сервиса конфигов
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
             auth_token=auth_token,
-            configs=['task_process_id', 'node_id', 'task_status_id']
+            configs=['task_process_id', 'node_id', 'task_status_id', 'contest_process_id']
         )
         if configs[1] == 200:
             configs = configs[0]
             task_process_id = configs.get('data').get('task_process_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
             task_status_id = configs.get('data').get('task_status_id')
         elif configs[1] == 400:
@@ -205,14 +210,16 @@ class ContestDetailsView(BaseContestView):
             return Response(
                 {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # проверяем, существует ли такой конкурс
+        if not contest_exists(access_token, contest_id, node_id, contest_process_id):
+            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
+                            status=status.HTTP_404_NOT_FOUND)
+        # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
-        # проверяем, отправил пользователь решение или нет
+        # получаем id заявки пользователя на участие в конкурсе, если она есть, и ее статус (отправлено решение или нет)
         result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
         user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
         contest_data = get_contest(access_token, contest_id, node_id)
-        if not contest_data:
-            return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
-                            status=status.HTTP_404_NOT_FOUND)
         response_data = contest_data[0]
         if contest_data[1] == 200:
             response_data['data'].update(user_data)
