@@ -109,11 +109,11 @@ class StatusSerializer(serializers.Serializer):
 
 
 class CustomFieldsSerializer(serializers.Serializer):
-    cf_brief = serializers.CharField(allow_blank=True)
-    cf_profession = serializers.CharField(allow_blank=True)
-    cf_deadline = serializers.CharField(allow_blank=True)
-    cf_award = serializers.CharField(allow_blank=True)
-    cf_konkurs_category = serializers.CharField(allow_blank=True)
+    cf_brief = serializers.CharField(required=False, allow_blank=True)
+    cf_profession = serializers.CharField(required=False, allow_blank=True)
+    cf_deadline = serializers.CharField(required=False, allow_blank=True)
+    cf_award = serializers.CharField(required=False, allow_blank=True)
+    cf_konkurs_category = serializers.CharField(required=False, allow_blank=True)
 
 
 class AttachmentsSerializer(serializers.Serializer):
@@ -123,7 +123,7 @@ class AttachmentsSerializer(serializers.Serializer):
 
 class ContestsSerializer(serializers.Serializer):
     id = serializers.UUIDField()
-    title = serializers.CharField()
+    title = serializers.CharField(allow_null=True)
     description = serializers.CharField()
     created_at = serializers.CharField()
     status = StatusSerializer()

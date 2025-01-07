@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Union, Tuple, List, Dict, Optional
+from typing import Union, Tuple, List, Dict, Optional, BinaryIO
 
 import requests
 from django.conf import settings
@@ -65,25 +65,20 @@ def task_solution_status(token: str, task_id: str, user_id: str, task_process_id
     """ Проверяет наличие заявки на конкурс и ее статус """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/rql/{node_id}"
+    url = f"{base_url}/api/tasks/{node_id}/{task_id}"
     try:
-        response = requests.post(url, headers=headers, json={
-            "rql": f"process.id = '{task_process_id}' AND id = '{task_id}' AND cf_userid = '{user_id}'",
-            "fields": []})
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
         response_data = response.json().get('data', [])
-        if response_data:
-            for response in response_data:
-                status_new = task_status_id.get('new')
-                status_approved = task_status_id.get('approved')
-                status_completed = task_status_id.get('completed')
-                status = response.get('status').get('id')
-                if status == status_completed:
-                    task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение уже отправлено'}
-                    break
-                elif status in (status_new, status_approved):
-                    task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
-                    break
+        if response_data and response_data.get('process').get('id') == task_process_id:
+            status_new = task_status_id.get('new')
+            status_approved = task_status_id.get('approved')
+            status_completed = task_status_id.get('completed')
+            status = response_data.get('status').get('id')
+            if status == status_completed:
+                task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение уже отправлено'}
+            elif status in (status_new, status_approved):
+                task_status = {'code': 'TASK_UNCOMPLETED', 'message': 'Решение не отправлено'}
             else:
                 task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
         else:
@@ -228,14 +223,14 @@ def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Di
         return result_data, response.status_code
 
 
-def patch_task(
+def delete_task(
         token: str,
         task_id: str,
         node_id: str,
         task_process_id: str,
         task_status_rejection: str
 ) -> Tuple[Dict, int] | None:
-    """Изменение статуса заявки на участие в конкурсе на 'Отказ'."""
+    """ Изменение статуса заявки на участие в конкурсе на 'Отказ'. """
     access_token = token
     # проверяем, что есть такая заявка на участие в конкурсе
     headers = {"Authorization": f'Bearer {access_token}'}
@@ -302,6 +297,30 @@ def patch_task(
             }
         }
         return result_data, response.status_code
+
+
+def patch_task(token: str, task_id: str, node_id: str, solution_link: str | None, comments: str | None, task_status_completed: str) -> tuple[dict, int]:
+    """ Редактирование заявки на участие в конкурсе при отправке решения. """
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    url = f"{base_url}/api/tasks/{node_id}/{task_id}"
+    data = {"status_id": task_status_completed}
+    if solution_link and comments:
+        data["custom_fields"] = {"solution_link": solution_link, "comments": comments}
+    elif solution_link:
+        data["custom_fields"] = {"solution_link": solution_link}
+    elif comments:
+        data["custom_fields"] = {"comments": comments}
+    try:
+        response = requests.patch(url, headers=headers, json=data)
+        response.raise_for_status()
+        print('res_patch:', response.json().get('data', []))
+        return response.json().get('data', []), 200
+    except requests.exceptions.HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500
+
+    except requests.exceptions.RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
 
 def contest_exists(token: str, contest_id: str, node_id: str, contest_process_id: str) -> bool:
@@ -520,7 +539,7 @@ def check_task(
 
 
 def get_attachments(token: str, task_id: str, node_id: str) -> dict | None:
-    """Функция для получения загруженных данных к задаче."""
+    """ Функция для получения загруженных данных к задаче. """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/attachments/{node_id}/{task_id}"
@@ -534,6 +553,24 @@ def get_attachments(token: str, task_id: str, node_id: str) -> dict | None:
             "content_type": response_data[0].get('content_type'),
         }
     return None
+
+
+def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file: BinaryIO) -> tuple[dict, int]:
+    """ Функция для отправки решения на конкурс. """
+    access_token = token
+    headers = {"Authorization": f'Bearer {access_token}'}
+    data = {'type': 'task', 'user_id': user_id}
+    files = {'attachment': file}
+    url = f"{base_url}/api/attachments/{node_id}/{task_id}"
+    try:
+        response = requests.post(url, headers=headers, json=data, files=files)
+        response.raise_for_status()
+        print('res_attach: ', response.json().get('data', []))
+        return response.json().get('data', []), 200
+    except requests.exceptions.HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500
+    except requests.exceptions.RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
 
 def get_tasks(
