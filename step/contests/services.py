@@ -15,13 +15,12 @@ password = settings.PASSWORD
 configs_url = settings.CONFIGS_SERVICE_URL
 
 def get_configs(project_id: str, account_id: Optional[str], auth_token: str, configs: List[str]) -> Tuple[Dict, int]:
-    """
-    Получить из сервиса конфигов значения конфигов типа config для данных project_id и account_id
-    """
+    """ Получить из сервиса конфигов значения конфигов типа configs для данных project_id и account_id """
     configs_types = ','.join(configs)
     url = f"{configs_url}/configs/{configs_types}"
     headers = {'Project-ID': project_id, 'Account-ID': account_id, 'Authorization': auth_token}
     try:
+        # делаем запрос к сервису конфигов для получения конфигов определенных типов
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             response_data = response.json()
@@ -61,20 +60,23 @@ def get_token():
         return token_cache['access_token']
 
 
-def task_solution_status(token: str, task_id: str, user_id: str, task_process_id: str, node_id: str, task_status_id: dict) -> dict:
+def task_solution_status(token: str, task_id: str, task_process_id: str, node_id: str, task_status_id: dict) -> dict:
     """ Проверяет наличие заявки на конкурс и ее статус """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_id}"
     try:
+        # делаем запрос в Райду для получения задачи с данным task_id
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         response_data = response.json().get('data', [])
+        # если задача существует и относится к заявкам на конкурсы
         if response_data and response_data.get('process').get('id') == task_process_id:
             status_new = task_status_id.get('new')
             status_approved = task_status_id.get('approved')
             status_completed = task_status_id.get('completed')
             status = response_data.get('status').get('id')
+            # проверяем статус заявки
             if status == status_completed:
                 task_status = {'code': 'TASK_COMPLETED', 'message': 'Решение уже отправлено'}
             elif status in (status_new, status_approved):
@@ -83,12 +85,9 @@ def task_solution_status(token: str, task_id: str, user_id: str, task_process_id
                 task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
         else:
             task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
-
         return task_status
-
     except requests.exceptions.HTTPError as err:
         return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
-
     except requests.exceptions.RequestException as err:
         return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
 
@@ -110,12 +109,14 @@ def get_user_task(
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/rql/{node_id}"
     try:
+        # делаем запрос в Райду с фильтрацией заявок на конкурсы по id конкурса и id пользователя
         response = requests.post(url, headers=headers, json={
             "rql": f"process.id = '{task_process_id}' AND cf_konkurs_id = '{contest_id}' AND cf_userid = '{user_id}'",
             "fields": []})
         response.raise_for_status()
         response_data = response.json().get('data', [])
         if response_data:
+            # так как можем получить несколько заявок, то ищем первую, у которой статус не равен "Отказ", и возвращаем ее id и статус
             for response in response_data:
                 status_new = task_status_id.get('new')
                 status_approved = task_status_id.get('approved')
@@ -139,23 +140,18 @@ def get_user_task(
             'user_task': user_task,
             'task_status': task_status
         }
-
     except requests.exceptions.HTTPError as err:
         return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
-
     except requests.exceptions.RequestException as err:
         return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
-
     except ValueError as err:
         return {'code': 'VALUE_ERROR', 'message': f'Ошибка обработки данных: {str(err)}'}
-
     except Exception as err:
         return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}
 
 
 def datetime_convert(date, format_date='%d.%m.%Y') -> Optional[str]:
-    """Преобразование даты в заданный формат."""
-
+    """ Преобразование даты в заданный формат. """
     if date is None or not date:
         result = date
     else:
@@ -175,21 +171,22 @@ def get_condition(parameters_ids: Union[Tuple[str, ...], List[str], str, None], 
 
 
 def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Dict, int] | list:
-    """Получение данных одного конкурса по его id."""
+    """ Получение данных одного конкурса по его id. """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{contest_id}"
     try:
+        # делаем запрос в Райду для получения конкурса с данным contest_id
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         response_data = response.json().get('data', [])
         if not response_data:
             return []
+        # с помощью датакласса и сериализатора преобразуем полученные данные в нужный формат
         contest_serializer = ContestsSerializer(data=response_data)
         contest_serializer.is_valid()
         contest = contest_serializer.save()
         result_data = contest.__dict__
-
         result_data = {
             "detail": {
                 "code": "OK",
@@ -198,12 +195,9 @@ def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Di
             "data": result_data,
             "info": {
                 "api_version": "0.0.1",
-                # "compression_algorithm": "lossy"
             }
         }
-
         return result_data, response.status_code
-
     except HTTPError as http_err:
         result_data = {
             "detail": {
@@ -212,7 +206,6 @@ def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Di
             }
         }
         return result_data, response.status_code
-
     except RequestException as err:
         result_data = {
             "detail": {
@@ -227,59 +220,28 @@ def delete_task(
         token: str,
         task_id: str,
         node_id: str,
-        task_process_id: str,
         task_status_rejection: str
 ) -> Tuple[Dict, int] | None:
     """ Изменение статуса заявки на участие в конкурсе на 'Отказ'. """
     access_token = token
-    # проверяем, что есть такая заявка на участие в конкурсе
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_id}"
+    # меняем статус заявки на "Отказ"
+    data = {"status_id": task_status_rejection}
     try:
-        response = requests.get(url, headers=headers)
+        # делаем запрос в Райду для обновления данных заявки на конкурс
+        response = requests.patch(url, headers=headers, json=data)
         response.raise_for_status()
-        response_data = response.json().get('data', [])
-        # Если заявка есть, меняем статус
-        if response_data and response_data.get('process').get('id') == task_process_id:
-            headers = {"Authorization": f'Bearer {access_token}'}
-            url = f"{base_url}/api/tasks/{node_id}/{task_id}"
-            data = {"status_id": task_status_rejection}
-            try:
-                response = requests.patch(url, headers=headers, json=data)
-                response.raise_for_status()
-                response_data = response.json().get('data', [])
-                if response_data:
-                    result_data = {
-                        "detail": {
-                            "code": "OK",
-                            "message": "Статус заявки изменен на 'Отказ'"
-                        },
-                        "info": {
-                            "api_version": "0.0.1",
-                            # "compression_algorithm": "lossy"
-                        }
-                    }
-                    return result_data, response.status_code
-                return None
-
-            except HTTPError as http_err:
-                result_data = {
-                    "detail": {
-                        "code": f"HTTP_ERROR - {response.status_code}",
-                        "message": str(http_err)
-                    }
-                }
-                return result_data, response.status_code
-
-            except RequestException as err:
-                result_data = {
-                    "detail": {
-                        "code": f"REQUEST_ERROR - {response.status_code}",
-                        "message": str(err)
-                    }
-                }
-                return result_data, response.status_code
-        return None
+        result_data = {
+            "detail": {
+                "code": "OK",
+                "message": "Статус заявки изменен на 'Отказ'"
+            },
+            "info": {
+                "api_version": "0.0.1",
+            }
+        }
+        return result_data, response.status_code
     except HTTPError as http_err:
         result_data = {
             "detail": {
@@ -288,7 +250,6 @@ def delete_task(
             }
         }
         return result_data, response.status_code
-
     except RequestException as err:
         result_data = {
             "detail": {
@@ -304,7 +265,9 @@ def patch_task(token: str, task_id: str, node_id: str, solution_link: str | None
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_id}"
+    # меняем статус заявки на "решение отправлено"
     data = {"status_id": task_status_completed}
+    # добавляем ссылку на решение и комментарии пользователя, если они были переданы в эндпоинте
     if solution_link and comments:
         data["custom_fields"] = {"solution_link": solution_link, "comments": comments}
     elif solution_link:
@@ -312,33 +275,38 @@ def patch_task(token: str, task_id: str, node_id: str, solution_link: str | None
     elif comments:
         data["custom_fields"] = {"comments": comments}
     try:
+        # делаем запрос в Райду для обновления данных заявки на участие в конкурсе
         response = requests.patch(url, headers=headers, json=data)
         response.raise_for_status()
-        print('res_patch:', response.json().get('data', []))
         return response.json().get('data', []), 200
     except requests.exceptions.HTTPError as err:
         return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500
-
     except requests.exceptions.RequestException as err:
         return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
 
 def contest_exists(token: str, contest_id: str, node_id: str, contest_process_id: str) -> bool:
-    """Проверяет, существует ли конкурс с данным contest_id"""
+    """ Проверяет, существует ли конкурс с данным contest_id """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{contest_id}"
-    response = requests.get(url, headers=headers)
-    response_data = response.json().get('data', [])
-    if response_data and response_data.get('process').get('id') == contest_process_id:
-        return True
-    return False
+    try:
+        # делаем запрос в Райду для получения задачи с данным contest_id
+        response = requests.get(url, headers=headers)
+        response_data = response.json().get('data', [])
+        # если задача существует и относится к конкурсам
+        if response_data and response_data.get('process').get('id') == contest_process_id:
+            return True
+        return False
+    except:
+        return False
 
 
 def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_process_id: str, task_status_new: str):
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_process_id}"
+    # данные для создания новой заявки на участие в конкурсе
     task = {
         "title": "",
         "description": "",
@@ -356,6 +324,7 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
         }
     }
     try:
+        # делаем запрос в Райду для создания новой задачи (заявка на участие в конкурсе)
         response = requests.post(url, json=task, headers=headers)
         response.raise_for_status()
         response_data = response.json().get('data')
@@ -373,10 +342,8 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
             "data": result_data,
             "info": {
                 "api_version": "0.0.1",
-                # "compression_algorithm": "lossy"
             }
         }
-
     except HTTPError as http_err:
         result_data = {
             "detail": {
@@ -385,7 +352,6 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
             }
         }
         return result_data, response.status_code
-
     except RequestException as err:
         result_data = {
             "detail": {
@@ -543,16 +509,20 @@ def get_attachments(token: str, task_id: str, node_id: str) -> dict | None:
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/attachments/{node_id}/{task_id}"
-    response = requests.get(url, headers=headers)
-    response_data = response.json().get('data', [])
-    if response_data:
-        return {
-            "id": response_data[0].get('id'),
-            "name": response_data[0].get('name'),
-            "url": response_data[0].get('url'),
-            "content_type": response_data[0].get('content_type'),
-        }
-    return None
+    try:
+        # делаем запрос в Райду для получения приложенного решения на конкурс
+        response = requests.get(url, headers=headers)
+        response_data = response.json().get('data', [])
+        if response_data:
+            return {
+                "id": response_data[0].get('id'),
+                "name": response_data[0].get('name'),
+                "url": response_data[0].get('url'),
+                "content_type": response_data[0].get('content_type'),
+            }
+        return None
+    except:
+        return None
 
 
 def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file: BinaryIO) -> tuple[dict, int]:
@@ -563,9 +533,9 @@ def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file:
     files = {'attachment': file}
     url = f"{base_url}/api/attachments/{node_id}/{task_id}"
     try:
+        # делаем запрос в Райду и передаем полученный файл, прикрепляя его к заявке на конкурс
         response = requests.post(url, headers=headers, json=data, files=files)
         response.raise_for_status()
-        print('res_attach: ', response.json().get('data', []))
         return response.json().get('data', []), 200
     except requests.exceptions.HTTPError as err:
         return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500

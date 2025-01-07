@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
                           QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
-                          HeadersSerializer, SolutionSerializer)
+                          HeadersSerializer, SolutionSerializer, DetailSerializer)
 from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, delete_task,
                        get_history, contest_exists, create_task, get_contest_tasks, get_configs, task_solution_status,
                        post_attachments, patch_task)
@@ -248,10 +248,13 @@ class QuitContestView(BaseContestView):
     def delete(self, request, task_id):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем токен из заголовков для авторизации в сервисе конфигов
         auth_token = request.META.get('HTTP_AUTHORIZATION')
+        # получаем конфиги из сервиса конфигов
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -262,6 +265,7 @@ class QuitContestView(BaseContestView):
             configs = configs[0]
             task_process_id = configs.get('data').get('task_process_id').get('value')
             node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
             task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
         elif configs[1] == 400:
             return Response(
@@ -271,11 +275,15 @@ class QuitContestView(BaseContestView):
             return Response(
                 {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # получаем токен для запросов в Райду
         access_token = get_token()
-        response_data = delete_task(access_token, task_id, node_id, task_process_id, task_status_rejection)
-        if not response_data:
+        # проверяем, есть ли заявка на конкурс с данным task_id
+        task_solution = task_solution_status(access_token, task_id, task_process_id, node_id, task_status_id)
+        if task_solution.get('code') not in ('TASK_COMPLETED', 'TASK_UNCOMPLETED'):
             return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)
+        # меняем статус заявки на конкурс на "Отказ"
+        response_data = delete_task(access_token, task_id, node_id, task_status_rejection)
         return Response(response_data[0], status=response_data[1])
 
 
@@ -306,10 +314,13 @@ class UserTaskView(BaseContestView):
     def post(self, request):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовкм
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем токен из заголовков для авторизации в сервисе конфигов
         auth_token = request.META.get('HTTP_AUTHORIZATION')
+        # получаем конфиги из сервиса конфигов
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -331,12 +342,17 @@ class UserTaskView(BaseContestView):
             return Response(
                 {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
+        # валидируем данные, полученные от пользователя
         serializer = CreateTaskSerializer(data=request.data)
         if serializer.is_valid():
             contest_id = serializer.validated_data['contest_id']
+            # получаем токен для запросов в Райду
             access_token = get_token()
+            # проверяем, есть ли конкурс с данным contest_id
             if contest_exists(access_token, contest_id, node_id, contest_process_id):
+                # проверяем, есть ли заявка на данный конкурс с любым статусом, кроме "Отказ"
                 task = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
                 if task and task.get('user_task'):
                     response = {
@@ -346,15 +362,13 @@ class UserTaskView(BaseContestView):
                         },
                         "info": {
                             "api_version": "0.0.1",
-                            # "compression_algorithm": "lossy"
                         }
                     }
                     return Response(response, status=status.HTTP_409_CONFLICT)
-
-                else:
-                    new_contest = create_task(access_token, contest_id, user_id, node_id, task_process_id,
-                                              task_status_new)
-                    return Response(new_contest, status=status.HTTP_201_CREATED)
+                # создаем новую заявку на участие в конкурсе
+                new_contest = create_task(access_token, contest_id, user_id, node_id, task_process_id,
+                                          task_status_new)
+                return Response(new_contest, status=status.HTTP_201_CREATED)
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
         response = {'detail': {
@@ -378,13 +392,9 @@ class SolutionView(BaseContestView):
         ],
         request=SolutionSerializer,
         responses={
-            201: OpenApiResponse(
+            200: OpenApiResponse(
                 description="Successful Response",
-                response=TaskResponseSerializer()
-            ),
-            409: OpenApiResponse(
-                description="Объект уже существует",
-                response=ErrorResponseSerializer()
+                response=DetailSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -393,10 +403,13 @@ class SolutionView(BaseContestView):
     def post(self, request):
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
+        # валидируем заголовки
         serializer = HeadersSerializer(data={'project_id': project_id, 'account_id': account_id})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+        # получаем токен из заголовков для авторизации в сервисе конфигов
         auth_token = request.META.get('HTTP_AUTHORIZATION')
+        # получаем конфиги из сервиса конфигов
         configs = get_configs(
             project_id=project_id,
             account_id=account_id,
@@ -417,22 +430,29 @@ class SolutionView(BaseContestView):
             return Response(
                 {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
+        # валидируем данные, полученные от пользователя
         serializer = SolutionSerializer(data=request.data)
         if serializer.is_valid():
             task_id = serializer.validated_data['task_id']
+            # получаем токен для доступа к Райде
             access_token = get_token()
-            task_status = task_solution_status(access_token, task_id, user_id, task_process_id, node_id, task_status_id)
+            # проверяем, существует ли заявка с таким task_id, и было ли к ней прикреплено решение
+            task_status = task_solution_status(access_token, task_id, task_process_id, node_id, task_status_id)
+            # если решение не было отправлено ранее
             if task_status.get('code') == 'TASK_UNCOMPLETED':
                 solution_file = request.FILES.getlist("solution_file")
+                # посылаем полученный файл в Райду
                 send_solution = post_attachments(access_token, task_id, user_id, node_id, solution_file[0])
                 if send_solution[1] == 500:
                     return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {send_solution[0]}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 solution_link = serializer.validated_data['solution_link'] if 'solution_link' in serializer.validated_data else None
                 comments = serializer.validated_data['comments'] if 'comments' in serializer.validated_data else None
+                # меняем статус заявки на "решение отправлено" и добавляем к заявке ссылку на решение и комментарии
                 change_status = patch_task(access_token, task_id, node_id, solution_link, comments, task_status_completed)
                 if change_status[1] == 500:
-                    return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Сбой при отправке решения: {change_status[0]}'},
+                    return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {change_status[0]}'},
                                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 return Response(data={'code': 'OK', 'message': 'Решение успешно отправлено'}, status=status.HTTP_200_OK)
             elif task_status.get('code') in ('TASK_COMPLETED', 'TASK_DOES_NOT_EXIST'):
