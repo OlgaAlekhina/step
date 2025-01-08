@@ -67,12 +67,6 @@ class GetArchiveSerializer(serializers.Serializer):
     info = InfoSerializer()
 
 
-class QuitContestSerializer(serializers.Serializer):
-    """Сериализатор для успешного изменения статуса заявки на участие в конкурсе на 'Отказ' """
-    detail = DetailSerializer()
-    info = InfoSerializer()
-
-
 class CreatedTaskSerializer(serializers.Serializer):
     """Сериализатор для получения данных созданной задачи для участия в конкурсе """
     task_id = serializers.UUIDField()

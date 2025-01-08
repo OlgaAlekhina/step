@@ -216,64 +216,16 @@ def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Di
         return result_data, response.status_code
 
 
-def delete_task(
-        token: str,
-        task_id: str,
-        node_id: str,
-        task_status_rejection: str
-) -> Tuple[Dict, int] | None:
-    """ Изменение статуса заявки на участие в конкурсе на 'Отказ'. """
-    access_token = token
-    headers = {"Authorization": f'Bearer {access_token}'}
-    url = f"{base_url}/api/tasks/{node_id}/{task_id}"
-    # меняем статус заявки на "Отказ"
-    data = {"status_id": task_status_rejection}
-    try:
-        # делаем запрос в Райду для обновления данных заявки на конкурс
-        response = requests.patch(url, headers=headers, json=data)
-        response.raise_for_status()
-        result_data = {
-            "detail": {
-                "code": "OK",
-                "message": "Статус заявки изменен на 'Отказ'"
-            },
-            "info": {
-                "api_version": "0.0.1",
-            }
-        }
-        return result_data, response.status_code
-    except HTTPError as http_err:
-        result_data = {
-            "detail": {
-                "code": f"HTTP_ERROR - {response.status_code}",
-                "message": str(http_err)
-            }
-        }
-        return result_data, response.status_code
-    except RequestException as err:
-        result_data = {
-            "detail": {
-                "code": f"REQUEST_ERROR - {response.status_code}",
-                "message": str(err)
-            }
-        }
-        return result_data, response.status_code
-
-
-def patch_task(token: str, task_id: str, node_id: str, solution_link: str | None, comments: str | None, task_status_completed: str) -> tuple[dict, int]:
+def patch_task(token: str, task_id: str, node_id: str, task_status: str, custom_fields: dict) -> tuple[dict, int]:
     """ Редактирование заявки на участие в конкурсе при отправке решения. """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_id}"
     # меняем статус заявки на "решение отправлено"
-    data = {"status_id": task_status_completed}
-    # добавляем ссылку на решение и комментарии пользователя, если они были переданы в эндпоинте
-    if solution_link and comments:
-        data["custom_fields"] = {"solution_link": solution_link, "comments": comments}
-    elif solution_link:
-        data["custom_fields"] = {"solution_link": solution_link}
-    elif comments:
-        data["custom_fields"] = {"comments": comments}
+    data = {"status_id": task_status}
+    # добавляем ссылку на решение и комментарии пользователя в кастомные поля, если они были переданы в эндпоинте
+    if custom_fields:
+        data["custom_fields"] = custom_fields
     try:
         # делаем запрос в Райду для обновления данных заявки на участие в конкурсе
         response = requests.patch(url, headers=headers, json=data)
@@ -337,7 +289,7 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
         return {
             "detail": {
                 "code": "OK",
-                "message": "Задача создана"
+                "message": "Заявка на конкурс создана"
             },
             "data": result_data,
             "info": {
@@ -529,12 +481,11 @@ def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file:
     """ Функция для отправки решения на конкурс. """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
-    data = {'type': 'task', 'user_id': user_id}
     files = {'attachment': file}
-    url = f"{base_url}/api/attachments/{node_id}/{task_id}"
+    url = f"{base_url}/api/attachments/{node_id}/{task_id}?type=task"
     try:
         # делаем запрос в Райду и передаем полученный файл, прикрепляя его к заявке на конкурс
-        response = requests.post(url, headers=headers, json=data, files=files)
+        response = requests.post(url, headers=headers, files=files)
         response.raise_for_status()
         return response.json().get('data', []), 200
     except requests.exceptions.HTTPError as err:

@@ -6,12 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import (GetArchiveSerializer, ErrorResponseSerializer, ContestDetailsResponseSerializer,
-                          QuitContestSerializer, CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
+                          CreateTaskSerializer, TaskResponseSerializer, QueryParamsSerializer,
                           GetContestTasksListSerializer, GetUserTasksListSerializer, GetUserHistoryListSerializer,
-                          HeadersSerializer, SolutionSerializer, DetailSerializer)
-from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, delete_task,
-                       get_history, contest_exists, create_task, get_contest_tasks, get_configs, task_solution_status,
-                       post_attachments, patch_task)
+                          HeadersSerializer, SolutionSerializer)
+from .services import (get_token, get_contest, get_contests, get_user_task, get_tasks, get_history, contest_exists, create_task,
+                       get_contest_tasks, get_configs, task_solution_status, post_attachments, patch_task)
 
 
 class BaseContestView(APIView):
@@ -239,7 +238,7 @@ class QuitContestView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=QuitContestSerializer()
+                response=ErrorResponseSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -283,8 +282,12 @@ class QuitContestView(BaseContestView):
             return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)
         # меняем статус заявки на конкурс на "Отказ"
-        response_data = delete_task(access_token, task_id, node_id, task_status_rejection)
-        return Response(response_data[0], status=response_data[1])
+        response_data = patch_task(access_token, task_id, node_id, task_status_rejection, {})
+        if response_data[1] == 500:
+            return Response(data={'detail': {'code': 'INTERNAL_SERVER_ERROR',
+                                  'message': f'Произошел сбой при выполнении запроса: {response_data[0]}'}},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(data={'detail': {'code': 'OK', 'message': 'Статус заявки изменен на "Отказ"'}}, status=status.HTTP_200_OK)
 
 
 class UserTaskView(BaseContestView):
@@ -394,7 +397,7 @@ class SolutionView(BaseContestView):
         responses={
             200: OpenApiResponse(
                 description="Successful Response",
-                response=DetailSerializer()
+                response=ErrorResponseSerializer()
             ),
             **BaseContestView.COMMON_RESPONSES
         },
@@ -447,14 +450,20 @@ class SolutionView(BaseContestView):
                 send_solution = post_attachments(access_token, task_id, user_id, node_id, solution_file[0])
                 if send_solution[1] == 500:
                     return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {send_solution[0]}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                # составляем словарь для кастомных полей, если они были переданы
                 solution_link = serializer.validated_data['solution_link'] if 'solution_link' in serializer.validated_data else None
                 comments = serializer.validated_data['comments'] if 'comments' in serializer.validated_data else None
+                custom_fields = {}
+                if solution_link:
+                    custom_fields['solution_link'] = solution_link
+                if comments:
+                    custom_fields['comments'] = comments
                 # меняем статус заявки на "решение отправлено" и добавляем к заявке ссылку на решение и комментарии
-                change_status = patch_task(access_token, task_id, node_id, solution_link, comments, task_status_completed)
+                change_status = patch_task(access_token, task_id, node_id, task_status_completed, custom_fields)
                 if change_status[1] == 500:
                     return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {change_status[0]}'},
                                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                return Response(data={'code': 'OK', 'message': 'Решение успешно отправлено'}, status=status.HTTP_200_OK)
+                return Response(data={'detail': {'code': 'OK', 'message': 'Решение успешно отправлено'}}, status=status.HTTP_200_OK)
             elif task_status.get('code') in ('TASK_COMPLETED', 'TASK_DOES_NOT_EXIST'):
                 return Response(data=task_status, status=status.HTTP_400_BAD_REQUEST)
             return Response(data=task_status, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
