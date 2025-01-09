@@ -74,20 +74,13 @@ class ArchiveContestsView(BaseContestView):
             auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'contest_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            node_id = configs.get('data').get('node_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            status_id_done = configs.get('data').get('contest_status_id').get('done')
-            status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        node_id = configs.get('data').get('node_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        status_id_done = configs.get('data').get('contest_status_id').get('done')
+        status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -134,19 +127,12 @@ class ActiveContestsView(BaseContestView):
             auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'contest_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            node_id = configs.get('data').get('node_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        node_id = configs.get('data').get('node_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -178,8 +164,6 @@ class ContestDetailsView(BaseContestView):
         tags=['Contests']
     )
     def get(self, request, contest_id):
-        # получаем токен для доступа к Райде
-        access_token = get_token()
         project_id = request.META.get('HTTP_PROJECT_ID') if request.META.get('HTTP_PROJECT_ID') else None
         account_id = request.META.get('HTTP_ACCOUNT_ID') if request.META.get('HTTP_ACCOUNT_ID') else None
         # валидируем заголовки
@@ -195,20 +179,15 @@ class ContestDetailsView(BaseContestView):
             auth_token=auth_token,
             configs=['task_process_id', 'node_id', 'task_status_id', 'contest_process_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            node_id = configs.get('data').get('node_id').get('value')
-            task_status_id = configs.get('data').get('task_status_id')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        node_id = configs.get('data').get('node_id').get('value')
+        task_status_id = configs.get('data').get('task_status_id')
+        # получаем токен для доступа к Райде
+        access_token = get_token()
         # проверяем, существует ли такой конкурс
         if not contest_exists(access_token, contest_id, node_id, contest_process_id):
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
@@ -217,7 +196,9 @@ class ContestDetailsView(BaseContestView):
         user_id = request.auth.get('user_id')
         # получаем id заявки пользователя на участие в конкурсе, если она есть, и ее статус (отправлено решение или нет)
         result = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
-        user_data = {'user_task_id': result.get('user_task'), 'user_task_status': result.get('task_status')}
+        if result[1] != 200:
+            return Response({'detail': result[0]}, status=result[1])
+        user_data = {'user_task_id': result[0].get('user_task'), 'user_task_status': result[0].get('task_status')}
         contest_data = get_contest(access_token, contest_id, node_id)
         response_data = contest_data[0]
         if contest_data[1] == 200:
@@ -260,20 +241,13 @@ class QuitContestView(BaseContestView):
             auth_token=auth_token,
             configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            node_id = configs.get('data').get('node_id').get('value')
-            task_status_id = configs.get('data').get('task_status_id')
-            task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        node_id = configs.get('data').get('node_id').get('value')
+        task_status_id = configs.get('data').get('task_status_id')
+        task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
         # получаем токен для запросов в Райду
         access_token = get_token()
         # проверяем, есть ли заявка на конкурс с данным task_id
@@ -283,10 +257,8 @@ class QuitContestView(BaseContestView):
                             status=status.HTTP_404_NOT_FOUND)
         # меняем статус заявки на конкурс на "Отказ"
         response_data = patch_task(access_token, task_id, node_id, task_status_rejection, {})
-        if response_data[1] == 500:
-            return Response(data={'detail': {'code': 'INTERNAL_SERVER_ERROR',
-                                  'message': f'Произошел сбой при выполнении запроса: {response_data[0]}'}},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if response_data[1] > 200:
+            return Response({'detail': response_data[0]}, status=response_data[1])
         return Response(data={'detail': {'code': 'OK', 'message': 'Статус заявки изменен на "Отказ"'}}, status=status.HTTP_200_OK)
 
 
@@ -330,21 +302,14 @@ class UserTaskView(BaseContestView):
             auth_token=auth_token,
             configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            node_id = configs.get('data').get('node_id').get('value')
-            task_status_id = configs.get('data').get('task_status_id')
-            task_status_new = configs.get('data').get('task_status_id').get('new')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        node_id = configs.get('data').get('node_id').get('value')
+        task_status_id = configs.get('data').get('task_status_id')
+        task_status_new = configs.get('data').get('task_status_id').get('new')
         # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
         # валидируем данные, полученные от пользователя
@@ -357,7 +322,9 @@ class UserTaskView(BaseContestView):
             if contest_exists(access_token, contest_id, node_id, contest_process_id):
                 # проверяем, есть ли заявка на данный конкурс с любым статусом, кроме "Отказ"
                 task = get_user_task(access_token, contest_id, user_id, task_process_id, node_id, task_status_id)
-                if task and task.get('user_task'):
+                if task[1] > 200:
+                    return Response({'detail': task[0]}, status=task[1])
+                if task[0] and task[0].get('user_task'):
                     response = {
                         "detail": {
                             "code": "ENTITY_EXISTS",
@@ -371,14 +338,13 @@ class UserTaskView(BaseContestView):
                 # создаем новую заявку на участие в конкурсе
                 new_contest = create_task(access_token, contest_id, user_id, node_id, task_process_id,
                                           task_status_new)
-                return Response(new_contest, status=status.HTTP_201_CREATED)
+                return Response(new_contest[0], status=new_contest[1])
             return Response({'detail': dict(code='NOT_FOUND', message='Конкурс не найден.')},
                             status=status.HTTP_404_NOT_FOUND)
         response = {'detail': {
             "code": "BAD_REQUEST",
             "message": serializer.errors
-        }
-        }
+        }}
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -419,20 +385,13 @@ class SolutionView(BaseContestView):
             auth_token=auth_token,
             configs=['task_process_id', 'contest_process_id', 'node_id', 'task_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            node_id = configs.get('data').get('node_id').get('value')
-            task_status_id = configs.get('data').get('task_status_id')
-            task_status_completed = configs.get('data').get('task_status_id').get('completed')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        node_id = configs.get('data').get('node_id').get('value')
+        task_status_id = configs.get('data').get('task_status_id')
+        task_status_completed = configs.get('data').get('task_status_id').get('completed')
         # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
         # валидируем данные, полученные от пользователя
@@ -448,8 +407,8 @@ class SolutionView(BaseContestView):
                 solution_file = request.FILES.getlist("solution_file")
                 # посылаем полученный файл в Райду
                 send_solution = post_attachments(access_token, task_id, user_id, node_id, solution_file[0])
-                if send_solution[1] == 500:
-                    return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {send_solution[0]}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                if send_solution[1] > 200:
+                    return Response({'detail': send_solution[0]}, status=send_solution[1])
                 # составляем словарь для кастомных полей, если они были переданы
                 solution_link = serializer.validated_data['solution_link'] if 'solution_link' in serializer.validated_data else None
                 comments = serializer.validated_data['comments'] if 'comments' in serializer.validated_data else None
@@ -460,18 +419,16 @@ class SolutionView(BaseContestView):
                     custom_fields['comments'] = comments
                 # меняем статус заявки на "решение отправлено" и добавляем к заявке ссылку на решение и комментарии
                 change_status = patch_task(access_token, task_id, node_id, task_status_completed, custom_fields)
-                if change_status[1] == 500:
-                    return Response(data={'code': 'INTERNAL_SERVER_ERROR', 'message': f'Произошел сбой при отправке решения: {change_status[0]}'},
-                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                return Response(data={'detail': {'code': 'OK', 'message': 'Решение успешно отправлено'}}, status=status.HTTP_200_OK)
+                if change_status[1] > 200:
+                    return Response({'detail': change_status[0]}, status=change_status[1])
+                return Response({'detail': {'code': 'OK', 'message': 'Решение успешно отправлено'}}, status=status.HTTP_200_OK)
             elif task_status.get('code') in ('TASK_COMPLETED', 'TASK_DOES_NOT_EXIST'):
-                return Response(data=task_status, status=status.HTTP_400_BAD_REQUEST)
-            return Response(data=task_status, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'detail': task_status}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': task_status}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         response = {'detail': {
             "code": "BAD_REQUEST",
             "message": serializer.errors
-        }
-        }
+        }}
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -511,25 +468,18 @@ class UserTasksView(BaseContestView):
             configs=['node_id', 'contest_process_id', 'contest_status_id', 'task_status_id', 'task_process_id']
         )
 
-        if configs[1] == 200:
-            configs = configs[0]
-            node_id = configs.get('data').get('node_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            process_task_id = configs.get('data').get('task_process_id').get('value')
-            acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
-            acceptance_works_done = configs.get('data').get('contest_status_id').get('acceptance_works_done')
-            voting = configs.get('data').get('contest_status_id').get('voting')
-            sum_results = configs.get('data').get('contest_status_id').get('sum_results')
-            done = configs.get('data').get('contest_status_id').get('done')
-            task_status_id_rejection = configs.get('data').get('task_status_id').get('rejection')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        node_id = configs.get('data').get('node_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        process_task_id = configs.get('data').get('task_process_id').get('value')
+        acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+        acceptance_works_done = configs.get('data').get('contest_status_id').get('acceptance_works_done')
+        voting = configs.get('data').get('contest_status_id').get('voting')
+        sum_results = configs.get('data').get('contest_status_id').get('sum_results')
+        done = configs.get('data').get('contest_status_id').get('done')
+        task_status_id_rejection = configs.get('data').get('task_status_id').get('rejection')
         if request.auth:
             user_id = request.auth.get('user_id')
 
@@ -589,20 +539,13 @@ class UserHistoryView(BaseContestView):
             auth_token=auth_token,
             configs=['node_id', 'contest_process_id', 'task_process_id', 'contest_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            node_id = configs.get('data').get('node_id').get('value')
-            contest_process_id = configs.get('data').get('contest_process_id').get('value')
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            done = configs.get('data').get('contest_status_id').get('done')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        node_id = configs.get('data').get('node_id').get('value')
+        contest_process_id = configs.get('data').get('contest_process_id').get('value')
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        done = configs.get('data').get('contest_status_id').get('done')
         if user_id is None and request.auth:
             user_id = request.auth.get('user_id')
 
@@ -656,20 +599,14 @@ class ContestTasksView(BaseContestView):
             auth_token=auth_token,
             configs=['node_id', 'task_process_id', 'task_status_id']
         )
-        if configs[1] == 200:
-            configs = configs[0]
-            node_id = configs.get('data').get('node_id').get('value')
-            task_process_id = configs.get('data').get('task_process_id').get('value')
-            status_id_task_approved = configs.get('data').get('task_status_id').get('approved')
-            status_id_task_completed = configs.get('data').get('task_status_id').get('completed')
-        elif configs[1] == 400:
-            return Response(
-                {'detail': dict(code='INCORRECT_CREDENTIALS', message='Неправильно введены учетные данные.')},
-                status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(
-                {'detail': dict(code='INTERNAL_SERVER_ERROR', message='Внутренняя ошибка в работе сервиса конфигов.')},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if configs[1] > 200:
+            return Response({'detail': configs[0]}, status=configs[1])
+        configs = configs[0]
+        node_id = configs.get('data').get('node_id').get('value')
+        task_process_id = configs.get('data').get('task_process_id').get('value')
+        status_id_task_approved = configs.get('data').get('task_status_id').get('approved')
+        status_id_task_completed = configs.get('data').get('task_status_id').get('completed')
+
         status_ids = request.query_params.getlist('status')
 
         if not status_ids:

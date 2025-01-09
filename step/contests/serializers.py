@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 def datetime_convert(date, format_date='%d.%m.%Y'):
-    """Преобразование даты в заданный формат."""
+    """ Преобразование даты в заданный формат. """
     if date is not None:
         result = datetime.fromisoformat(date.rstrip("Z") + "+00:00").strftime(format_date)
     else:
@@ -13,13 +13,13 @@ def datetime_convert(date, format_date='%d.%m.%Y'):
 
 
 class HeadersSerializer(serializers.Serializer):
-    """Сериализатор для валидации заголовков Project-ID и Account-ID """
+    """ Сериализатор для валидации заголовков Project-ID и Account-ID """
     project_id = serializers.UUIDField()
     account_id = serializers.UUIDField(allow_null=True)
 
 
 class CreateTaskSerializer(serializers.Serializer):
-    """Сериализатор для создания задачи на участие в конкурсе """
+    """ Сериализатор для создания задачи на участие в конкурсе """
     contest_id = serializers.UUIDField()
 
 
@@ -68,7 +68,7 @@ class GetArchiveSerializer(serializers.Serializer):
 
 
 class CreatedTaskSerializer(serializers.Serializer):
-    """Сериализатор для получения данных созданной задачи для участия в конкурсе """
+    """ Сериализатор для получения данных созданной задачи для участия в конкурсе """
     task_id = serializers.UUIDField()
     status = serializers.CharField()
     contest_id = serializers.UUIDField()
@@ -76,7 +76,7 @@ class CreatedTaskSerializer(serializers.Serializer):
 
 
 class TaskResponseSerializer(serializers.Serializer):
-    """Сериализатор для формата ответа API, который возвращает созданную задачу для участия в конкурсе """
+    """ Сериализатор для формата ответа API, который возвращает созданную задачу для участия в конкурсе """
     detail = DetailSerializer()
     data = CreatedTaskSerializer()
     info = InfoSerializer()
@@ -84,6 +84,7 @@ class TaskResponseSerializer(serializers.Serializer):
 
 @dataclass
 class Contest:
+    """ Датакласс для вывода данных по конкурсам """
     id: str
     title: str
     description: str
@@ -98,11 +99,13 @@ class Contest:
 
 
 class StatusSerializer(serializers.Serializer):
+    """ Сериализатор для вывода статусов конкурсов """
     id = serializers.UUIDField()
     name = serializers.CharField()
 
 
 class CustomFieldsSerializer(serializers.Serializer):
+    """ Сериализатор для вывода кастомных полей конкурсов """
     cf_brief = serializers.CharField(required=False, allow_blank=True)
     cf_profession = serializers.CharField(required=False, allow_blank=True)
     cf_deadline = serializers.CharField(required=False, allow_blank=True)
@@ -111,11 +114,13 @@ class CustomFieldsSerializer(serializers.Serializer):
 
 
 class AttachmentsSerializer(serializers.Serializer):
+    """ Сериализатор для вывода приложений к конкурсам """
     id = serializers.CharField(allow_blank=True)
     name = serializers.CharField(allow_blank=True)
 
 
 class ContestsSerializer(serializers.Serializer):
+    """ Сериализатор для преобразования данных конкурсов, полученных из Райды, в нужный формат """
     id = serializers.UUIDField()
     title = serializers.CharField(allow_null=True)
     description = serializers.CharField()
@@ -139,6 +144,7 @@ class ContestsSerializer(serializers.Serializer):
 
 
 class ContestDetailsSerializer(serializers.Serializer):
+    """ Сериализатор для формата ответа API, который возвращает данные одного конкурса """
     id = serializers.UUIDField()
     title = serializers.CharField()
     description = serializers.CharField()
@@ -153,7 +159,7 @@ class ContestDetailsSerializer(serializers.Serializer):
 
 
 class ContestDetailsResponseSerializer(serializers.Serializer):
-    """Сериализатор для формата ответа API, который возвращает детали конкурса по его id """
+    """ Сериализатор для формата ответа API, который возвращает детали конкурса по его id """
     detail = DetailSerializer()
     data = ContestDetailsSerializer()
     info = InfoSerializer()

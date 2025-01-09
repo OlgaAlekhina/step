@@ -22,12 +22,13 @@ def get_configs(project_id: str, account_id: Optional[str], auth_token: str, con
     try:
         # делаем запрос к сервису конфигов для получения конфигов определенных типов
         response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            response_data = response.json()
-            return response_data, 200
-        return {}, 400
-    except:
-        return {}, 500
+        response.raise_for_status()
+        response_data = response.json()
+        return response_data, 200
+    except requests.exceptions.HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
+    except requests.exceptions.RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
 
 def get_token():
@@ -99,7 +100,7 @@ def get_user_task(
         task_process_id: str,
         node_id: str,
         task_status_id: dict
-) -> dict:
+) -> tuple[dict, int]:
     """
     Проверка статуса заявки пользователя на участие в конкурсе.
     Эта функция отправляет POST-запрос к API для получения статуса заявки пользователя на участие в указанном конкурсе.
@@ -139,15 +140,15 @@ def get_user_task(
         return {
             'user_task': user_task,
             'task_status': task_status
-        }
+        }, 200
     except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
     except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
     except ValueError as err:
-        return {'code': 'VALUE_ERROR', 'message': f'Ошибка обработки данных: {str(err)}'}
+        return {'code': 'VALUE_ERROR', 'message': f'Ошибка обработки данных: {str(err)}'}, 400
     except Exception as err:
-        return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}
+        return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}, 500
 
 
 def datetime_convert(date, format_date='%d.%m.%Y') -> Optional[str]:
@@ -232,7 +233,7 @@ def patch_task(token: str, task_id: str, node_id: str, task_status: str, custom_
         response.raise_for_status()
         return response.json().get('data', []), 200
     except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
     except requests.exceptions.RequestException as err:
         return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
@@ -254,7 +255,7 @@ def contest_exists(token: str, contest_id: str, node_id: str, contest_process_id
         return False
 
 
-def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_process_id: str, task_status_new: str):
+def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_process_id: str, task_status_new: str) -> tuple[dict, int]:
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     url = f"{base_url}/api/tasks/{node_id}/{task_process_id}"
@@ -295,7 +296,7 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
             "info": {
                 "api_version": "0.0.1",
             }
-        }
+        }, 201
     except HTTPError as http_err:
         result_data = {
             "detail": {
@@ -482,14 +483,14 @@ def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file:
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     files = {'attachment': file}
-    url = f"{base_url}/api/attachments/{node_id}/{task_id}?type=task"
+    url = f"{base_url}/api/attachments/{node_id}/{task_id}?type=task&content_type={file.content_type}"
     try:
         # делаем запрос в Райду и передаем полученный файл, прикрепляя его к заявке на конкурс
         response = requests.post(url, headers=headers, files=files)
         response.raise_for_status()
-        return response.json().get('data', []), 200
+        return response.json().get('data'), 200
     except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 500
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
     except requests.exceptions.RequestException as err:
         return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
 
