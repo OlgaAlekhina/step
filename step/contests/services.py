@@ -439,7 +439,7 @@ def check_task(
     if result:
         status = result[0].get('status').get('name', None)
         application_id = result[0].get('id', None)
-        solution_link = result[0].get('custom_fields').get('cf_konkurs_link', None)
+        solution_link = result[0].get('custom_fields').get('solution_link')
         if status == 'Задание выполнено':
             application_status = {'code': 'TASK_COMPLETED', 'message': 'Решение отправлено'}
         else:
