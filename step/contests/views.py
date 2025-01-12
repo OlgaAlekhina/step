@@ -77,10 +77,13 @@ class ArchiveContestsView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        node_id = configs.get('data').get('node_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        status_id_done = configs.get('data').get('contest_status_id').get('done')
-        status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
+        try:
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            status_id_done = configs.get('data').get('contest_status_id').get('done')
+            status_id_no_winner = configs.get('data').get('contest_status_id').get('no_winner')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -130,9 +133,12 @@ class ActiveContestsView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        node_id = configs.get('data').get('node_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+        try:
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            status_id_acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         result_data = get_contests(
             token=access_token,
             node_id=node_id,
@@ -182,10 +188,13 @@ class ContestDetailsView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        node_id = configs.get('data').get('node_id').get('value')
-        task_status_id = configs.get('data').get('task_status_id')
+        try:
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         # получаем токен для доступа к Райде
         access_token = get_token()
         # проверяем, существует ли такой конкурс
@@ -244,10 +253,13 @@ class QuitContestView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        node_id = configs.get('data').get('node_id').get('value')
-        task_status_id = configs.get('data').get('task_status_id')
-        task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
+        try:
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
+            task_status_rejection = configs.get('data').get('task_status_id').get('rejection')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         # получаем токен для запросов в Райду
         access_token = get_token()
         # проверяем, есть ли заявка на конкурс с данным task_id
@@ -308,11 +320,14 @@ class UserTaskView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        node_id = configs.get('data').get('node_id').get('value')
-        task_status_id = configs.get('data').get('task_status_id')
-        task_status_new = configs.get('data').get('task_status_id').get('new')
+        try:
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
+            task_status_new = configs.get('data').get('task_status_id').get('new')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
         # валидируем данные, полученные от пользователя
@@ -391,10 +406,13 @@ class SolutionView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        node_id = configs.get('data').get('node_id').get('value')
-        task_status_id = configs.get('data').get('task_status_id')
-        task_status_completed = configs.get('data').get('task_status_id').get('completed')
+        try:
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            node_id = configs.get('data').get('node_id').get('value')
+            task_status_id = configs.get('data').get('task_status_id')
+            task_status_completed = configs.get('data').get('task_status_id').get('completed')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         # получаем id пользователя из объекта Request
         user_id = request.auth.get('user_id')
         # валидируем данные, полученные от пользователя
@@ -476,15 +494,18 @@ class UserTasksView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        node_id = configs.get('data').get('node_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        process_task_id = configs.get('data').get('task_process_id').get('value')
-        acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
-        acceptance_works_done = configs.get('data').get('contest_status_id').get('acceptance_works_done')
-        voting = configs.get('data').get('contest_status_id').get('voting')
-        sum_results = configs.get('data').get('contest_status_id').get('sum_results')
-        done = configs.get('data').get('contest_status_id').get('done')
-        task_status_id_rejection = configs.get('data').get('task_status_id').get('rejection')
+        try:
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            process_task_id = configs.get('data').get('task_process_id').get('value')
+            acceptance_works = configs.get('data').get('contest_status_id').get('acceptance_works')
+            acceptance_works_done = configs.get('data').get('contest_status_id').get('acceptance_works_done')
+            voting = configs.get('data').get('contest_status_id').get('voting')
+            sum_results = configs.get('data').get('contest_status_id').get('sum_results')
+            done = configs.get('data').get('contest_status_id').get('done')
+            task_status_id_rejection = configs.get('data').get('task_status_id').get('rejection')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         if request.auth:
             user_id = request.auth.get('user_id')
 
@@ -547,10 +568,13 @@ class UserHistoryView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        node_id = configs.get('data').get('node_id').get('value')
-        contest_process_id = configs.get('data').get('contest_process_id').get('value')
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        done = configs.get('data').get('contest_status_id').get('done')
+        try:
+            node_id = configs.get('data').get('node_id').get('value')
+            contest_process_id = configs.get('data').get('contest_process_id').get('value')
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            done = configs.get('data').get('contest_status_id').get('done')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
         if user_id is None and request.auth:
             user_id = request.auth.get('user_id')
 
@@ -607,10 +631,13 @@ class ContestTasksView(BaseContestView):
         if configs[1] > 200:
             return Response({'detail': configs[0]}, status=configs[1])
         configs = configs[0]
-        node_id = configs.get('data').get('node_id').get('value')
-        task_process_id = configs.get('data').get('task_process_id').get('value')
-        status_id_task_approved = configs.get('data').get('task_status_id').get('approved')
-        status_id_task_completed = configs.get('data').get('task_status_id').get('completed')
+        try:
+            node_id = configs.get('data').get('node_id').get('value')
+            task_process_id = configs.get('data').get('task_process_id').get('value')
+            status_id_task_approved = configs.get('data').get('task_status_id').get('approved')
+            status_id_task_completed = configs.get('data').get('task_status_id').get('completed')
+        except:
+            return Response(data={'detail': {'code': 'SERVICE_ERROR', 'message': 'Неправильный формат конфигураций для проекта'}}, status=500)
 
         status_ids = request.query_params.getlist('status')
 

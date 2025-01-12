@@ -479,7 +479,7 @@ def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file:
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
     files = {'attachment': file}
-    url = f"{base_url}/api/attachments/{node_id}/{task_id}?type=task&content_type={file.content_type}"
+    url = f"{base_url}/api/attachments/{node_id}/{task_id}?type=task"
     try:
         # делаем запрос в Райду и передаем полученный файл, прикрепляя его к заявке на конкурс
         response = requests.post(url, headers=headers, files=files)
