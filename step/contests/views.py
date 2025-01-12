@@ -252,6 +252,9 @@ class QuitContestView(BaseContestView):
         access_token = get_token()
         # проверяем, есть ли заявка на конкурс с данным task_id
         task_solution = task_solution_status(access_token, task_id, task_process_id, node_id, task_status_id)
+        if task_solution[1] > 200:
+            return Response({'detail': task_solution[0]}, status=task_solution[1])
+        task_solution = task_solution[0]
         if task_solution.get('code') not in ('TASK_COMPLETED', 'TASK_UNCOMPLETED'):
             return Response({'detail': dict(code='NOT_FOUND', message='Заявка на участие не найдена.')},
                             status=status.HTTP_404_NOT_FOUND)
@@ -402,6 +405,9 @@ class SolutionView(BaseContestView):
             access_token = get_token()
             # проверяем, существует ли заявка с таким task_id, и было ли к ней прикреплено решение
             task_status = task_solution_status(access_token, task_id, task_process_id, node_id, task_status_id)
+            if task_status[1] > 200:
+                return Response({'detail': task_status[0]}, status=task_status[1])
+            task_status = task_status[0]
             # если решение не было отправлено ранее
             if task_status.get('code') == 'TASK_UNCOMPLETED':
                 solution_file = request.FILES.getlist("solution_file")
@@ -422,9 +428,8 @@ class SolutionView(BaseContestView):
                 if change_status[1] > 200:
                     return Response({'detail': change_status[0]}, status=change_status[1])
                 return Response({'detail': {'code': 'OK', 'message': 'Решение успешно отправлено'}}, status=status.HTTP_200_OK)
-            elif task_status.get('code') in ('TASK_COMPLETED', 'TASK_DOES_NOT_EXIST'):
+            else:
                 return Response({'detail': task_status}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({'detail': task_status}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         response = {'detail': {
             "code": "BAD_REQUEST",
             "message": serializer.errors

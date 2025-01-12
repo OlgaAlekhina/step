@@ -25,10 +25,10 @@ def get_configs(project_id: str, account_id: Optional[str], auth_token: str, con
         response.raise_for_status()
         response_data = response.json()
         return response_data, 200
-    except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
-    except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
+    except HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, err.response.status_code
+    except RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, err.response.status_code if err.response else 500
 
 
 def get_token():
@@ -61,7 +61,7 @@ def get_token():
         return token_cache['access_token']
 
 
-def task_solution_status(token: str, task_id: str, task_process_id: str, node_id: str, task_status_id: dict) -> dict:
+def task_solution_status(token: str, task_id: str, task_process_id: str, node_id: str, task_status_id: dict) -> tuple[dict, int]:
     """ Проверяет наличие заявки на конкурс и ее статус """
     access_token = token
     headers = {"Authorization": f'Bearer {access_token}'}
@@ -86,11 +86,11 @@ def task_solution_status(token: str, task_id: str, task_process_id: str, node_id
                 task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
         else:
             task_status = {'code': 'TASK_DOES_NOT_EXIST', 'message': 'Заявка не найдена'}
-        return task_status
-    except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}
-    except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}
+        return task_status, 200
+    except HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, err.response.status_code
+    except RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, err.response.status_code if err.response else 500
 
 
 def get_user_task(
@@ -141,14 +141,10 @@ def get_user_task(
             'user_task': user_task,
             'task_status': task_status
         }, 200
-    except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
-    except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
-    except ValueError as err:
-        return {'code': 'VALUE_ERROR', 'message': f'Ошибка обработки данных: {str(err)}'}, 400
-    except Exception as err:
-        return {'code': 'NOT_DEFINED', 'message': f'Не определен: {str(err)}'}, 500
+    except HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, err.response.status_code
+    except RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, err.response.status_code if err.response else 500
 
 
 def datetime_convert(date, format_date='%d.%m.%Y') -> Optional[str]:
@@ -202,19 +198,19 @@ def get_contest(token: str, contest_id: str, node_id: Optional[str]) -> Tuple[Di
     except HTTPError as http_err:
         result_data = {
             "detail": {
-                "code": f"HTTP_ERROR - {response.status_code}",
+                "code": f"HTTP_ERROR - {http_err.response.status_code}",
                 "message": str(http_err)
             }
         }
-        return result_data, response.status_code
+        return result_data, http_err.response.status_code
     except RequestException as err:
         result_data = {
             "detail": {
-                "code": f"REQUEST_ERROR - {response.status_code}",
+                "code": "REQUEST_ERROR",
                 "message": str(err)
             }
         }
-        return result_data, response.status_code
+        return result_data, err.response.status_code if err.response else 500
 
 
 def patch_task(token: str, task_id: str, node_id: str, task_status: str, custom_fields: dict) -> tuple[dict, int]:
@@ -232,10 +228,10 @@ def patch_task(token: str, task_id: str, node_id: str, task_status: str, custom_
         response = requests.patch(url, headers=headers, json=data)
         response.raise_for_status()
         return response.json().get('data', []), 200
-    except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
-    except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
+    except HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, err.response.status_code
+    except RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, err.response.status_code if err.response else 500
 
 
 def contest_exists(token: str, contest_id: str, node_id: str, contest_process_id: str) -> bool:
@@ -300,19 +296,19 @@ def create_task(token: str, contest_id: str, user_id: str, node_id: str, task_pr
     except HTTPError as http_err:
         result_data = {
             "detail": {
-                "code": f"HTTP_ERROR - {response.status_code}",
+                "code": f"HTTP_ERROR - {http_err.response.status_code}",
                 "message": str(http_err)
             }
         }
-        return result_data, response.status_code
+        return result_data, http_err.response.status_code
     except RequestException as err:
         result_data = {
             "detail": {
-                "code": f"REQUEST_ERROR - {response.status_code}",
+                "code": "REQUEST_ERROR",
                 "message": str(err)
             }
         }
-        return result_data, response.status_code
+        return result_data, err.response.status_code if err.response else 500
 
 
 def get_contests(
@@ -489,10 +485,10 @@ def post_attachments(token: str, task_id: str, user_id: str, node_id: str, file:
         response = requests.post(url, headers=headers, files=files)
         response.raise_for_status()
         return response.json().get('data'), 200
-    except requests.exceptions.HTTPError as err:
-        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, 400
-    except requests.exceptions.RequestException as err:
-        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, 500
+    except HTTPError as err:
+        return {'code': 'HTTP_ERROR', 'message': f'Ошибка HTTP: {str(err)}'}, err.response.status_code
+    except RequestException as err:
+        return {'code': 'REQUEST_ERROR', 'message': f'Ошибка запроса: {str(err)}'}, err.response.status_code if err.response else 500
 
 
 def get_tasks(
