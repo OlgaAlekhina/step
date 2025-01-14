@@ -1,6 +1,11 @@
+#variables:
+#  IMAGE_NAME: olgaalekhina/step
+#  IMAGE_TAG: app-1.0
+
 variables:
-  IMAGE_NAME: olgaalekhina/step
-  IMAGE_TAG: app-1.0
+  REGISTRY_URL: docker.infra.cloveri.com
+  REPOSITORY_PATH: cloveri.start/step/step_latest
+  IMAGE: step_prod:latest
 
 stages:
    - build
@@ -16,10 +21,13 @@ build_image:
  variables:
   DOCKER_TLS_CERTDIR: "/certs"
  before_script:
-  - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+#  - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+  - echo "$CI_DEPLOY_PASSWORD" | docker login $REGISTRY_URL -u $CI_DEPLOY_USER --password-stdin
  script:
-  - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-  - docker push $IMAGE_NAME:$IMAGE_TAG
+#  - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+#  - docker push $IMAGE_NAME:$IMAGE_TAG
+   - docker build -t $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE .
+   - docker push $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE
  rules:
   - if: $CI_COMMIT_BRANCH == "master"
 
@@ -41,11 +49,16 @@ deploy:
 
  script:
    - echo "Deploying backend"
+#   - ssh cloveri.host "cd /home/devops/backend &&
+#       docker-compose down &&
+#       docker rmi $IMAGE_NAME:$IMAGE_TAG &&
+#       docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
+#       docker pull $IMAGE_NAME:$IMAGE_TAG &&
+#       docker-compose up -d"
    - ssh cloveri.host "cd /home/devops/backend &&
-       docker-compose down &&
-       docker rmi $IMAGE_NAME:$IMAGE_TAG &&
-       docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
-       docker pull $IMAGE_NAME:$IMAGE_TAG &&
-       docker-compose up -d"
+     docker-compose down &&
+     docker rmi $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE &&
+     echo "$CI_DEPLOY_PASSWORD" | docker login $REGISTRY_URL -u $CI_DEPLOY_USER --password-stdin &&
+     docker-compose up -d"
  rules:
    - if: $CI_COMMIT_BRANCH == "master"
