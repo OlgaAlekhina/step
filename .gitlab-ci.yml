@@ -57,7 +57,6 @@ deploy:
 #       docker-compose up -d"
    - ssh cloveri.host "cd /home/devops/backend &&
      docker-compose down &&
-     docker rmi $REGISTRY_URL/$REPOSITORY_PATH/$IMAGE &&
      echo "$CI_DEPLOY_PASSWORD" | docker login $REGISTRY_URL -u $CI_DEPLOY_USER --password-stdin &&
      docker-compose up -d"
  rules:
